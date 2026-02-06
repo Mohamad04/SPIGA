@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ASVPatrouille.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">SPIGA</a> &gt; <a href="index.source.html" class="el_package">fr.spiga.fleet</a> &gt; <span class="el_source">ASVPatrouille.java</span></div><h1>ASVPatrouille.java</h1><pre class="source lang-java linenums">package fr.spiga.fleet;
+
+import fr.spiga.core.Position3D;
+
+/**
+ * ASV de patrouille spécialisé en surveillance maritime de surface.
+ * Extension du véhicule de surface avec capacités de détection.
+ * 
+ * @author SPIGA Team
+ * @version 1.0
+ */
+public class ASVPatrouille extends VehiculeSurface {
+
+    private static final double VITESSE_MAX_DEFAUT = 15.0; // m/s (plus rapide)
+    private static final double AUTONOMIE_MAX_DEFAUT = 20.0; // heures (très longue durée)
+
+    /** Portée du radar en mètres */
+    private final double porteeRadar;
+
+    /**
+     * Constructeur avec paramètres par défaut.
+     * 
+     * @param position la position initiale
+     */
+    public ASVPatrouille(Position3D position) {
+<span class="nc" id="L26">        super(position, VITESSE_MAX_DEFAUT, AUTONOMIE_MAX_DEFAUT);</span>
+<span class="nc" id="L27">        this.porteeRadar = 10000.0; // 10 km</span>
+<span class="nc" id="L28">    }</span>
+
+    public double getPorteeRadar() {
+<span class="nc" id="L31">        return porteeRadar;</span>
+    }
+
+    /**
+     * Effectue un scan radar de la zone.
+     * 
+     * @return le résultat du scan
+     */
+    public String effectuerScanRadar() {
+<span class="nc" id="L40">        return String.format(&quot;Scan radar - Portée: %.0fm&quot;, porteeRadar);</span>
+    }
+
+    @Override
+    public String getType() {
+<span class="nc" id="L45">        return &quot;ASVPatrouille&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

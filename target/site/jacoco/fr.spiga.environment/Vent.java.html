@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Vent.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">SPIGA</a> &gt; <a href="index.source.html" class="el_package">fr.spiga.environment</a> &gt; <span class="el_source">Vent.java</span></div><h1>Vent.java</h1><pre class="source lang-java linenums">package fr.spiga.environment;
+
+import fr.spiga.core.Position3D;
+import java.io.Serializable;
+
+/**
+ * Classe modélisant le vent dans la zone d'opération.
+ * Le vent affecte les actifs aériens et de surface.
+ * 
+ * @author SPIGA Team
+ * @version 1.0
+ */
+public class Vent implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    /** Direction et force du vent (Position3D comme vecteur 2D, Z=0) */
+    private Position3D direction;
+
+    /** Intensité du vent en pourcentage (0-100) */
+    private double intensite;
+
+    /**
+     * Constructeur d'un vent.
+     * 
+     * @param direction la direction du vent (Position3D)
+     * @param intensite l'intensité (0-100)
+     */
+<span class="fc" id="L28">    public Vent(Position3D direction, double intensite) {</span>
+<span class="pc bpc" id="L29" title="1 of 2 branches missed.">        if (direction == null) {</span>
+<span class="nc" id="L30">            throw new IllegalArgumentException(&quot;La direction ne peut pas être nulle&quot;);</span>
+        }
+<span class="pc bpc" id="L32" title="2 of 4 branches missed.">        if (intensite &lt; 0 || intensite &gt; 100) {</span>
+<span class="nc" id="L33">            throw new IllegalArgumentException(&quot;L'intensité doit être entre 0 et 100&quot;);</span>
+        }
+
+<span class="fc" id="L36">        this.direction = direction;</span>
+<span class="fc" id="L37">        this.intensite = intensite;</span>
+<span class="fc" id="L38">    }</span>
+
+    /**
+     * Constructeur avec paramètres simplifiés.
+     * 
+     * @param angleRadians l'angle en radians
+     * @param intensite    l'intensité (0-100)
+     */
+    public Vent(double angleRadians, double intensite) {
+<span class="nc" id="L47">        this(new Position3D(Math.cos(angleRadians), Math.sin(angleRadians), 0.0), intensite);</span>
+<span class="nc" id="L48">    }</span>
+
+    public Position3D getDirection() {
+<span class="fc" id="L51">        return direction;</span>
+    }
+
+    public void setDirection(Position3D direction) {
+<span class="nc bnc" id="L55" title="All 2 branches missed.">        if (direction == null) {</span>
+<span class="nc" id="L56">            throw new IllegalArgumentException(&quot;La direction ne peut pas être nulle&quot;);</span>
+        }
+<span class="nc" id="L58">        this.direction = direction;</span>
+<span class="nc" id="L59">    }</span>
+
+    public double getIntensite() {
+<span class="fc" id="L62">        return intensite;</span>
+    }
+
+    public void setIntensite(double intensite) {
+<span class="nc bnc" id="L66" title="All 4 branches missed.">        if (intensite &lt; 0 || intensite &gt; 100) {</span>
+<span class="nc" id="L67">            throw new IllegalArgumentException(&quot;L'intensité doit être entre 0 et 100&quot;);</span>
+        }
+<span class="nc" id="L69">        this.intensite = intensite;</span>
+<span class="nc" id="L70">    }</span>
+
+    @Override
+    public String toString() {
+<span class="nc" id="L74">        return String.format(&quot;Vent[direction=%s, intensité=%.1f%%]&quot;, direction, intensite);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

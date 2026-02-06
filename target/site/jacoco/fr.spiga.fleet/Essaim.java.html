@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Essaim.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">SPIGA</a> &gt; <a href="index.source.html" class="el_package">fr.spiga.fleet</a> &gt; <span class="el_source">Essaim.java</span></div><h1>Essaim.java</h1><pre class="source lang-java linenums">package fr.spiga.fleet;
+
+import fr.spiga.core.ActifMobile;
+import fr.spiga.core.Position3D;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * Classe représentant un essaim (swarm) d'actifs mobiles hétérogènes.
+ * Un essaim coordonne plusieurs actifs pour accomplir des missions ensemble.
+ * 
+ * @author SPIGA Team
+ * @version 1.0
+ */
+public class Essaim implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    /** Identifiant unique de l'essaim */
+    private final String id;
+
+    /** Nom de l'essaim */
+    private String nom;
+
+    /** Liste des actifs membres de l'essaim */
+    private final List&lt;ActifMobile&gt; actifs;
+
+    /** Distance minimale entre actifs pour éviter les collisions (en mètres) */
+    private static final double DISTANCE_SECURITE = 50.0;
+
+    /**
+     * Constructeur d'un essaim.
+     * 
+     * @param nom le nom de l'essaim
+     */
+<span class="fc" id="L37">    public Essaim(String nom) {</span>
+<span class="fc" id="L38">        this.id = UUID.randomUUID().toString();</span>
+<span class="pc bpc" id="L39" title="1 of 2 branches missed.">        this.nom = nom != null ? nom : &quot;Essaim-&quot; + id.substring(0, 8);</span>
+<span class="fc" id="L40">        this.actifs = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L41">    }</span>
+
+    public String getId() {
+<span class="nc" id="L44">        return id;</span>
+    }
+
+    public String getNom() {
+<span class="fc" id="L48">        return nom;</span>
+    }
+
+    public void setNom(String nom) {
+<span class="nc bnc" id="L52" title="All 4 branches missed.">        if (nom != null &amp;&amp; !nom.isBlank()) {</span>
+<span class="nc" id="L53">            this.nom = nom;</span>
+        }
+<span class="nc" id="L55">    }</span>
+
+    /**
+     * Ajoute un actif à l'essaim.
+     * 
+     * @param actif l'actif à ajouter
+     * @return true si ajout réussi, false sinon
+     */
+    public boolean ajouterActif(ActifMobile actif) {
+<span class="pc bpc" id="L64" title="1 of 4 branches missed.">        if (actif == null || actifs.contains(actif)) {</span>
+<span class="fc" id="L65">            return false;</span>
+        }
+<span class="fc" id="L67">        return actifs.add(actif);</span>
+    }
+
+    /**
+     * Retire un actif de l'essaim.
+     * 
+     * @param actif l'actif à retirer
+     * @return true si retrait réussi, false sinon
+     */
+    public boolean retirerActif(ActifMobile actif) {
+<span class="fc" id="L77">        return actifs.remove(actif);</span>
+    }
+
+    /**
+     * Obtient la liste des actifs (copie défensive).
+     * 
+     * @return la liste des actifs
+     */
+    public List&lt;ActifMobile&gt; getActifs() {
+<span class="nc" id="L86">        return new ArrayList&lt;&gt;(actifs);</span>
+    }
+
+    /**
+     * Obtient le nombre d'actifs dans l'essaim.
+     * 
+     * @return le nombre d'actifs
+     */
+    public int getNombreActifs() {
+<span class="fc" id="L95">        return actifs.size();</span>
+    }
+
+    /**
+     * Vérifie les risques de collision entre les actifs de l'essaim.
+     * 
+     * @return la liste des paires d'actifs en risque de collision
+     */
+    public List&lt;String&gt; verifierCollisions() {
+<span class="nc" id="L104">        List&lt;String&gt; alertes = new ArrayList&lt;&gt;();</span>
+
+<span class="nc bnc" id="L106" title="All 2 branches missed.">        for (int i = 0; i &lt; actifs.size(); i++) {</span>
+<span class="nc bnc" id="L107" title="All 2 branches missed.">            for (int j = i + 1; j &lt; actifs.size(); j++) {</span>
+<span class="nc" id="L108">                ActifMobile actif1 = actifs.get(i);</span>
+<span class="nc" id="L109">                ActifMobile actif2 = actifs.get(j);</span>
+
+                // On ne vérifie que les actifs qui bougent (ou au moins un des deux)
+<span class="nc bnc" id="L112" title="All 2 branches missed.">                if (actif1.getEtatOperationnel() != fr.spiga.core.EtatOperationnel.EN_MISSION &amp;&amp;</span>
+<span class="nc bnc" id="L113" title="All 2 branches missed.">                        actif2.getEtatOperationnel() != fr.spiga.core.EtatOperationnel.EN_MISSION) {</span>
+<span class="nc" id="L114">                    continue;</span>
+                }
+
+<span class="nc" id="L117">                double distance = actif1.getPosition().distanceVers(actif2.getPosition());</span>
+
+<span class="nc bnc" id="L119" title="All 2 branches missed.">                if (distance &lt; 10.0) { // Collision réelle</span>
+<span class="nc bnc" id="L120" title="All 2 branches missed.">                    if (actif1.getEtatOperationnel() != fr.spiga.core.EtatOperationnel.EN_PANNE) {</span>
+<span class="nc" id="L121">                        actif1.setEtatOperationnel(fr.spiga.core.EtatOperationnel.EN_PANNE);</span>
+<span class="nc" id="L122">                        actif1.notifierEtatCritique(&quot;COLLISION_VEHICULE&quot;);</span>
+                    }
+<span class="nc bnc" id="L124" title="All 2 branches missed.">                    if (actif2.getEtatOperationnel() != fr.spiga.core.EtatOperationnel.EN_PANNE) {</span>
+<span class="nc" id="L125">                        actif2.setEtatOperationnel(fr.spiga.core.EtatOperationnel.EN_PANNE);</span>
+<span class="nc" id="L126">                        actif2.notifierEtatCritique(&quot;COLLISION_VEHICULE&quot;);</span>
+                    }
+<span class="nc" id="L128">                    alertes.add(String.format(&quot;!!! COLLISION !!! %s e %s bateram!&quot;,</span>
+<span class="nc" id="L129">                            actif1.getId(), actif2.getId()));</span>
+<span class="nc bnc" id="L130" title="All 2 branches missed.">                } else if (distance &lt; DISTANCE_SECURITE) {</span>
+<span class="nc" id="L131">                    alertes.add(String.format(&quot;Risque de collision: %s e %s (%.1fm)&quot;,</span>
+<span class="nc" id="L132">                            actif1.getId(), actif2.getId(), distance));</span>
+                }
+            }
+        }
+
+<span class="nc" id="L137">        return alertes;</span>
+    }
+
+    /**
+     * Calcule le centre de l'essaim (position moyenne).
+     * 
+     * @return le centre de l'essaim, ou null si essaim vide
+     */
+    public Position3D calculerCentre() {
+<span class="pc bpc" id="L146" title="1 of 2 branches missed.">        if (actifs.isEmpty()) {</span>
+<span class="nc" id="L147">            return null;</span>
+        }
+
+<span class="fc" id="L150">        double sumX = 0, sumY = 0, sumZ = 0;</span>
+<span class="fc bfc" id="L151" title="All 2 branches covered.">        for (ActifMobile actif : actifs) {</span>
+<span class="fc" id="L152">            Position3D pos = actif.getPosition();</span>
+<span class="fc" id="L153">            sumX += pos.getX();</span>
+<span class="fc" id="L154">            sumY += pos.getY();</span>
+<span class="fc" id="L155">            sumZ += pos.getZ();</span>
+<span class="fc" id="L156">        }</span>
+
+<span class="fc" id="L158">        int n = actifs.size();</span>
+<span class="fc" id="L159">        return new Position3D(sumX / n, sumY / n, sumZ / n);</span>
+    }
+
+    /**
+     * Calcule l'autonomie moyenne de l'essaim.
+     * 
+     * @return l'autonomie moyenne en pourcentage
+     */
+    public double calculerAutonomieMoyenne() {
+<span class="nc bnc" id="L168" title="All 2 branches missed.">        if (actifs.isEmpty()) {</span>
+<span class="nc" id="L169">            return 0.0;</span>
+        }
+
+<span class="nc" id="L172">        double somme = 0;</span>
+<span class="nc bnc" id="L173" title="All 2 branches missed.">        for (ActifMobile actif : actifs) {</span>
+<span class="nc" id="L174">            somme += actif.getAutonomieRestante();</span>
+<span class="nc" id="L175">        }</span>
+
+<span class="nc" id="L177">        return somme / actifs.size();</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L182">        return String.format(&quot;Essaim[nom=%s, actifs=%d, autonomieMoyenne=%.1f%%]&quot;,</span>
+<span class="nc" id="L183">                nom, actifs.size(), calculerAutonomieMoyenne());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

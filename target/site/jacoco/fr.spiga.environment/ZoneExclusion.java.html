@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ZoneExclusion.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">SPIGA</a> &gt; <a href="index.source.html" class="el_package">fr.spiga.environment</a> &gt; <span class="el_source">ZoneExclusion.java</span></div><h1>ZoneExclusion.java</h1><pre class="source lang-java linenums">package fr.spiga.environment;
+
+import fr.spiga.core.Position3D;
+import java.io.Serializable;
+
+/**
+ * Classe représentant une zone d'exclusion (zone interdite) dans la zone
+ * d'opération.
+ * Les actifs ne doivent pas entrer dans ces zones.
+ * 
+ * @author SPIGA Team
+ * @version 1.0
+ */
+public class ZoneExclusion implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    /** Position centrale de la zone */
+    private final Position3D centre;
+
+    /** Rayon de la zone en mètres */
+    private final double rayon;
+
+    /** Nom ou description de la zone */
+    private final String nom;
+
+    /**
+     * Constructeur d'une zone d'exclusion.
+     * 
+     * @param centre le centre de la zone
+     * @param rayon  le rayon en mètres
+     * @param nom    le nom de la zone
+     */
+<span class="nc" id="L33">    public ZoneExclusion(Position3D centre, double rayon, String nom) {</span>
+<span class="nc bnc" id="L34" title="All 2 branches missed.">        if (centre == null) {</span>
+<span class="nc" id="L35">            throw new IllegalArgumentException(&quot;Le centre ne peut pas être nul&quot;);</span>
+        }
+<span class="nc bnc" id="L37" title="All 2 branches missed.">        if (rayon &lt;= 0) {</span>
+<span class="nc" id="L38">            throw new IllegalArgumentException(&quot;Le rayon doit être positif&quot;);</span>
+        }
+<span class="nc bnc" id="L40" title="All 4 branches missed.">        if (nom == null || nom.isBlank()) {</span>
+<span class="nc" id="L41">            throw new IllegalArgumentException(&quot;Le nom ne peut pas être vide&quot;);</span>
+        }
+
+<span class="nc" id="L44">        this.centre = centre;</span>
+<span class="nc" id="L45">        this.rayon = rayon;</span>
+<span class="nc" id="L46">        this.nom = nom;</span>
+<span class="nc" id="L47">    }</span>
+
+    public Position3D getCentre() {
+<span class="nc" id="L50">        return centre;</span>
+    }
+
+    public double getRayon() {
+<span class="nc" id="L54">        return rayon;</span>
+    }
+
+    public String getNom() {
+<span class="nc" id="L58">        return nom;</span>
+    }
+
+    /**
+     * Vérifie si une position est dans cette zone interdite.
+     * 
+     * @param position la position à vérifier
+     * @return true si dans la zone, false sinon
+     */
+    public boolean contientPosition(Position3D position) {
+<span class="nc bnc" id="L68" title="All 2 branches missed.">        return centre.distanceVers(position) &lt;= rayon;</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L73">        return String.format(&quot;ZoneExclusion[nom=%s, centre=%s, rayon=%.1fm]&quot;,</span>
+<span class="nc" id="L74">                nom, centre, rayon);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

@@ -1,0 +1,414 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SPIGACli.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">SPIGA</a> &gt; <a href="index.source.html" class="el_package">fr.spiga.cli</a> &gt; <span class="el_source">SPIGACli.java</span></div><h1>SPIGACli.java</h1><pre class="source lang-java linenums">package fr.spiga.cli;
+
+import fr.spiga.core.*;
+import fr.spiga.environment.*;
+import fr.spiga.fleet.*;
+import fr.spiga.mission.*;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+
+/**
+ * Interface en ligne de commande (CLI) pour le système SPIGA.
+ * Permet de gérer la flotte, les missions et les simulations via un menu
+ * console.
+ * 
+ * @author SPIGA Team
+ * @version 1.0
+ */
+public class SPIGACli {
+
+    private final Scanner scanner;
+    private final GestionnaireEssaim gestionnaire;
+    private final List&lt;Mission&gt; missions;
+    private ZoneOperation zoneOperation;
+
+    /**
+     * Constructeur du CLI.
+     */
+<span class="nc" id="L31">    public SPIGACli() {</span>
+<span class="nc" id="L32">        this.scanner = new Scanner(System.in);</span>
+<span class="nc" id="L33">        this.gestionnaire = new GestionnaireEssaim();</span>
+<span class="nc" id="L34">        this.missions = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L35">        initialiserZoneOperation();</span>
+<span class="nc" id="L36">    }</span>
+
+    /**
+     * Initialise la zone d'opération par défaut.
+     */
+    private void initialiserZoneOperation() {
+<span class="nc" id="L42">        Position3D min = new Position3D(0, 0, -2000);</span>
+<span class="nc" id="L43">        Position3D max = new Position3D(100000, 100000, 10000);</span>
+<span class="nc" id="L44">        this.zoneOperation = new ZoneOperation(min, max);</span>
+
+        // Ajouter quelques conditions environnementales
+<span class="nc" id="L47">        zoneOperation.setVent(new Vent(Math.PI / 4, 20.0)); // Vent modéré</span>
+<span class="nc" id="L48">        zoneOperation.setCourantMarin(new CourantMarin(new Position3D(1, 0.5, 0), 15.0));</span>
+<span class="nc" id="L49">    }</span>
+
+    /**
+     * Démarre l'application CLI.
+     */
+    public void demarrer() {
+<span class="nc" id="L55">        System.out.println(&quot;===============================================&quot;);</span>
+<span class="nc" id="L56">        System.out.println(&quot;   SPIGA - Simulateur de Planification&quot;);</span>
+<span class="nc" id="L57">        System.out.println(&quot;   et de Gestion d'Actifs Mobiles&quot;);</span>
+<span class="nc" id="L58">        System.out.println(&quot;===============================================\n&quot;);</span>
+
+<span class="nc" id="L60">        boolean continuer = true;</span>
+<span class="nc bnc" id="L61" title="All 2 branches missed.">        while (continuer) {</span>
+<span class="nc" id="L62">            afficherMenuPrincipal();</span>
+<span class="nc" id="L63">            int choix = lireEntier(&quot;Votre choix: &quot;);</span>
+
+<span class="nc bnc" id="L65" title="All 7 branches missed.">            switch (choix) {</span>
+<span class="nc" id="L66">                case 1 -&gt; menuCreationActifs();</span>
+<span class="nc" id="L67">                case 2 -&gt; menuGestionMissions();</span>
+<span class="nc" id="L68">                case 3 -&gt; menuSimulation();</span>
+<span class="nc" id="L69">                case 4 -&gt; afficherEtatFlotte();</span>
+<span class="nc" id="L70">                case 5 -&gt; menuConfiguration();</span>
+                case 0 -&gt; {
+<span class="nc" id="L72">                    System.out.println(&quot;\nAu revoir !&quot;);</span>
+<span class="nc" id="L73">                    continuer = false;</span>
+<span class="nc" id="L74">                }</span>
+<span class="nc" id="L75">                default -&gt; System.out.println(&quot;Choix invalide !&quot;);</span>
+            }
+<span class="nc" id="L77">        }</span>
+
+<span class="nc" id="L79">        scanner.close();</span>
+<span class="nc" id="L80">    }</span>
+
+    /**
+     * Affiche le menu principal.
+     */
+    private void afficherMenuPrincipal() {
+<span class="nc" id="L86">        System.out.println(&quot;\n=== MENU PRINCIPAL ===&quot;);</span>
+<span class="nc" id="L87">        System.out.println(&quot;1.  Créer des actifs&quot;);</span>
+<span class="nc" id="L88">        System.out.println(&quot;2. Gestion des missions&quot;);</span>
+<span class="nc" id="L89">        System.out.println(&quot;3. Simulation&quot;);</span>
+<span class="nc" id="L90">        System.out.println(&quot;4. Afficher l'état de la flotte&quot;);</span>
+<span class="nc" id="L91">        System.out.println(&quot;5. Configuration&quot;);</span>
+<span class="nc" id="L92">        System.out.println(&quot;0. Quitter&quot;);</span>
+<span class="nc" id="L93">        System.out.println();</span>
+<span class="nc" id="L94">    }</span>
+
+    /**
+     * Menu de création d'actifs.
+     */
+    private void menuCreationActifs() {
+<span class="nc" id="L100">        System.out.println(&quot;\n=== CRÉATION D'ACTIFS ===&quot;);</span>
+<span class="nc" id="L101">        System.out.println(&quot;1. Drone de Reconnaissance&quot;);</span>
+<span class="nc" id="L102">        System.out.println(&quot;2. Drone Logistique&quot;);</span>
+<span class="nc" id="L103">        System.out.println(&quot;4. Véhicule de Surface&quot;);</span>
+<span class="nc" id="L104">        System.out.println(&quot;5. Véhicule Sous-Marin&quot;);</span>
+<span class="nc" id="L105">        System.out.println(&quot;0. Retour&quot;);</span>
+
+<span class="nc" id="L107">        int choix = lireEntier(&quot;Type d'actif: &quot;);</span>
+
+<span class="nc bnc" id="L109" title="All 2 branches missed.">        if (choix == 0)</span>
+<span class="nc" id="L110">            return;</span>
+
+<span class="nc" id="L112">        double x = lireDouble(&quot;Position X (m): &quot;);</span>
+<span class="nc" id="L113">        double y = lireDouble(&quot;Position Y (m): &quot;);</span>
+<span class="nc" id="L114">        double z = lireDouble(&quot;Position Z (m, altitude ou profondeur): &quot;);</span>
+<span class="nc" id="L115">        Position3D position = new Position3D(x, y, z);</span>
+
+<span class="nc" id="L117">        ActifMobile actif = null;</span>
+
+<span class="nc bnc" id="L119" title="All 5 branches missed.">        switch (choix) {</span>
+<span class="nc" id="L120">            case 1 -&gt; actif = new DroneReconnaissance(position);</span>
+<span class="nc" id="L121">            case 2 -&gt; actif = new DroneLogistique(position);</span>
+<span class="nc" id="L122">            case 4 -&gt; actif = new VehiculeSurface(position);</span>
+<span class="nc" id="L123">            case 5 -&gt; actif = new VehiculeSousMarin(position);</span>
+            default -&gt; {
+<span class="nc" id="L125">                System.out.println(&quot;Type invalide !&quot;);</span>
+<span class="nc" id="L126">                return;</span>
+            }
+        }
+
+<span class="nc" id="L130">        actif.setZoneOperation(zoneOperation);</span>
+<span class="nc" id="L131">        gestionnaire.enregistrerActif(actif);</span>
+<span class="nc" id="L132">        System.out.println(&quot;✓ Actif créé: &quot; + actif);</span>
+<span class="nc" id="L133">    }</span>
+
+    /**
+     * Menu de gestion des missions.
+     */
+    private void menuGestionMissions() {
+<span class="nc" id="L139">        System.out.println(&quot;\n=== GESTION DES MISSIONS ===&quot;);</span>
+<span class="nc" id="L140">        System.out.println(&quot;1. Créer une mission&quot;);</span>
+<span class="nc" id="L141">        System.out.println(&quot;2. Assigner des actifs à une mission&quot;);</span>
+<span class="nc" id="L142">        System.out.println(&quot;3. Démarrer une mission&quot;);</span>
+<span class="nc" id="L143">        System.out.println(&quot;4. Afficher l'historique&quot;);</span>
+<span class="nc" id="L144">        System.out.println(&quot;0. Retour&quot;);</span>
+
+<span class="nc" id="L146">        int choix = lireEntier(&quot;Votre choix: &quot;);</span>
+
+<span class="nc bnc" id="L148" title="All 5 branches missed.">        switch (choix) {</span>
+<span class="nc" id="L149">            case 1 -&gt; creerMission();</span>
+<span class="nc" id="L150">            case 2 -&gt; assignerActifsAMission();</span>
+<span class="nc" id="L151">            case 3 -&gt; demarrerMission();</span>
+            case 4 -&gt; {
+<span class="nc" id="L153">                System.out.println(&quot;\n--- HISTORIQUE DES MISSIONS ---&quot;);</span>
+<span class="nc bnc" id="L154" title="All 2 branches missed.">                for (Mission m : missions) {</span>
+<span class="nc" id="L155">                    System.out.println(m);</span>
+<span class="nc" id="L156">                }</span>
+            }
+        }
+<span class="nc" id="L159">    }</span>
+
+    /**
+     * Crée une nouvelle mission.
+     */
+    private void creerMission() {
+<span class="nc" id="L165">        System.out.println(&quot;\nType de mission:&quot;);</span>
+<span class="nc" id="L166">        System.out.println(&quot;1. Surveillance Maritime&quot;);</span>
+<span class="nc" id="L167">        System.out.println(&quot;2. Recherche et Sauvetage&quot;);</span>
+
+<span class="nc" id="L169">        int type = lireEntier(&quot;Type: &quot;);</span>
+
+<span class="nc" id="L171">        LocalDateTime debut = LocalDateTime.now().plusHours(1);</span>
+<span class="nc" id="L172">        LocalDateTime fin = debut.plusHours(4);</span>
+
+<span class="nc" id="L174">        Mission mission = null;</span>
+
+<span class="nc bnc" id="L176" title="All 2 branches missed.">        if (type == 1) {</span>
+<span class="nc" id="L177">            mission = new fr.spiga.mission.MissionSurveillanceMaritime(</span>
+                    debut, fin,
+                    new fr.spiga.core.Position3D(50000, 50000, 0));
+<span class="nc bnc" id="L180" title="All 2 branches missed.">        } else if (type == 2) {</span>
+<span class="nc" id="L181">            System.out.println(&quot;Véhicules en détresse :&quot;);</span>
+<span class="nc" id="L182">            gestionnaire.getTousLesActifs().stream()</span>
+<span class="nc bnc" id="L183" title="All 4 branches missed.">                    .filter(a -&gt; a.getEtatOperationnel() == EtatOperationnel.EN_PANNE || a.getAutonomieRestante() &lt; 25)</span>
+<span class="nc" id="L184">                    .forEach(a -&gt; System.out.println(&quot; - &quot; + a.getId() + &quot; (&quot; + a.getType() + &quot;)&quot;));</span>
+
+<span class="nc" id="L186">            String idCible = lireTexte(&quot;ID du véhicule à secourir: &quot;);</span>
+<span class="nc" id="L187">            ActifMobile cibleRescape = gestionnaire.getTousLesActifs().stream()</span>
+<span class="nc" id="L188">                    .filter(a -&gt; a.getId().equalsIgnoreCase(idCible))</span>
+<span class="nc" id="L189">                    .findFirst().orElse(null);</span>
+
+<span class="nc bnc" id="L191" title="All 2 branches missed.">            if (cibleRescape == null) {</span>
+<span class="nc" id="L192">                System.out.println(&quot;Véhicule introuvable !&quot;);</span>
+<span class="nc" id="L193">                return;</span>
+            }
+<span class="nc" id="L195">            mission = new MissionRechercheEtSauvetage(debut, fin, cibleRescape);</span>
+        }
+
+<span class="nc bnc" id="L198" title="All 2 branches missed.">        if (mission != null) {</span>
+<span class="nc" id="L199">            missions.add(mission);</span>
+<span class="nc" id="L200">            System.out.println(&quot;✓ Mission créée: &quot; + mission);</span>
+        }
+<span class="nc" id="L202">    }</span>
+
+    /**
+     * Assigne des actifs à une mission.
+     */
+    private void assignerActifsAMission() {
+<span class="nc bnc" id="L208" title="All 2 branches missed.">        if (missions.isEmpty()) {</span>
+<span class="nc" id="L209">            System.out.println(&quot;Aucune mission disponible !&quot;);</span>
+<span class="nc" id="L210">            return;</span>
+        }
+
+<span class="nc" id="L213">        System.out.println(&quot;\nMissions disponibles:&quot;);</span>
+<span class="nc bnc" id="L214" title="All 2 branches missed.">        for (int i = 0; i &lt; missions.size(); i++) {</span>
+<span class="nc" id="L215">            System.out.println((i + 1) + &quot;. &quot; + missions.get(i));</span>
+        }
+
+<span class="nc" id="L218">        int choix = lireEntier(&quot;Mission: &quot;) - 1;</span>
+<span class="nc bnc" id="L219" title="All 4 branches missed.">        if (choix &lt; 0 || choix &gt;= missions.size()) {</span>
+<span class="nc" id="L220">            System.out.println(&quot;Mission invalide !&quot;);</span>
+<span class="nc" id="L221">            return;</span>
+        }
+
+<span class="nc" id="L224">        Mission mission = missions.get(choix);</span>
+
+        // Sélectionner un actif optimal
+<span class="nc" id="L227">        ActifMobile actif = gestionnaire.selectionnerActifOptimalParAutonomie();</span>
+
+<span class="nc bnc" id="L229" title="All 2 branches missed.">        if (actif == null) {</span>
+<span class="nc" id="L230">            System.out.println(&quot;Aucun actif disponible !&quot;);</span>
+<span class="nc" id="L231">            return;</span>
+        }
+
+<span class="nc" id="L234">        mission.assignerActif(actif);</span>
+<span class="nc" id="L235">        System.out.println(&quot;✓ Actif &quot; + actif.getId() + &quot; assigné à &quot; + mission.getNom());</span>
+<span class="nc" id="L236">    }</span>
+
+    /**
+     * Démarre une mission.
+     */
+    private void demarrerMission() {
+<span class="nc" id="L242">        List&lt;Mission&gt; planned = missions.stream()</span>
+<span class="nc" id="L243">                .filter(m -&gt; &quot;PLANIFIEE&quot;.equals(m.getStatut()))</span>
+<span class="nc" id="L244">                .toList();</span>
+
+<span class="nc bnc" id="L246" title="All 2 branches missed.">        if (missions.isEmpty()) {</span>
+<span class="nc" id="L247">            System.out.println(&quot;Aucune mission planifiée !&quot;);</span>
+<span class="nc" id="L248">            return;</span>
+        }
+
+<span class="nc" id="L251">        System.out.println(&quot;\nMissions planifiées:&quot;);</span>
+<span class="nc bnc" id="L252" title="All 2 branches missed.">        for (int i = 0; i &lt; planned.size(); i++) {</span>
+<span class="nc" id="L253">            System.out.println((i + 1) + &quot;. &quot; + planned.get(i));</span>
+        }
+
+<span class="nc" id="L256">        int choix = lireEntier(&quot;Mission à démarrer: &quot;) - 1;</span>
+<span class="nc bnc" id="L257" title="All 4 branches missed.">        if (choix &gt;= 0 &amp;&amp; choix &lt; planned.size()) {</span>
+<span class="nc" id="L258">            Mission mission = planned.get(choix);</span>
+<span class="nc bnc" id="L259" title="All 2 branches missed.">            if (mission.demarrer()) {</span>
+<span class="nc" id="L260">                System.out.println(&quot;✓ Mission démarrée: &quot; + mission.getNom());</span>
+            } else {
+<span class="nc" id="L262">                System.out.println(&quot;✗ Échec du démarrage !&quot;);</span>
+            }
+        }
+<span class="nc" id="L265">    }</span>
+
+    /**
+     * Menu de simulation.
+     */
+    private void menuSimulation() {
+<span class="nc" id="L271">        System.out.println(&quot;\n=== SIMULATION ===&quot;);</span>
+<span class="nc" id="L272">        System.out.println(&quot;1. Déplacer un actif&quot;);</span>
+<span class="nc" id="L273">        System.out.println(&quot;2. Vérifier les collisions&quot;);</span>
+<span class="nc" id="L274">        System.out.println(&quot;3. Recharger tous les actifs au sol&quot;);</span>
+<span class="nc" id="L275">        System.out.println(&quot;0. Retour&quot;);</span>
+
+<span class="nc" id="L277">        int choix = lireEntier(&quot;Votre choix: &quot;);</span>
+
+<span class="nc bnc" id="L279" title="All 4 branches missed.">        switch (choix) {</span>
+<span class="nc" id="L280">            case 1 -&gt; deplacerActif();</span>
+<span class="nc" id="L281">            case 2 -&gt; verifierCollisions();</span>
+            case 3 -&gt; {
+<span class="nc" id="L283">                gestionnaire.rechargerTousLesActifsAuSol();</span>
+<span class="nc" id="L284">                System.out.println(&quot;✓ Tous les actifs au sol ont été rechargés&quot;);</span>
+            }
+        }
+<span class="nc" id="L287">    }</span>
+
+    /**
+     * Déplace un actif.
+     */
+    private void deplacerActif() {
+<span class="nc" id="L293">        List&lt;ActifMobile&gt; actifs = gestionnaire.getTousLesActifs();</span>
+<span class="nc bnc" id="L294" title="All 2 branches missed.">        if (actifs.isEmpty()) {</span>
+<span class="nc" id="L295">            System.out.println(&quot;Aucun actif disponible !&quot;);</span>
+<span class="nc" id="L296">            return;</span>
+        }
+
+<span class="nc" id="L299">        System.out.println(&quot;\nActifs:&quot;);</span>
+<span class="nc bnc" id="L300" title="All 2 branches missed.">        for (int i = 0; i &lt; actifs.size(); i++) {</span>
+<span class="nc" id="L301">            System.out.println((i + 1) + &quot;. &quot; + actifs.get(i));</span>
+        }
+
+<span class="nc" id="L304">        int choix = lireEntier(&quot;Actif: &quot;) - 1;</span>
+<span class="nc bnc" id="L305" title="All 4 branches missed.">        if (choix &lt; 0 || choix &gt;= actifs.size())</span>
+<span class="nc" id="L306">            return;</span>
+
+<span class="nc" id="L308">        ActifMobile actif = actifs.get(choix);</span>
+
+<span class="nc" id="L310">        double x = lireDouble(&quot;Cible X: &quot;);</span>
+<span class="nc" id="L311">        double y = lireDouble(&quot;Cible Y: &quot;);</span>
+<span class="nc" id="L312">        double z = lireDouble(&quot;Cible Z: &quot;);</span>
+
+<span class="nc" id="L314">        Position3D cible = new Position3D(x, y, z);</span>
+
+<span class="nc bnc" id="L316" title="All 2 branches missed.">        if (actif.deplacer(cible)) {</span>
+<span class="nc" id="L317">            System.out.println(&quot;✓ Déplacement réussi&quot;);</span>
+<span class="nc" id="L318">            System.out.println(&quot;Nouvelle position: &quot; + actif.getPosition());</span>
+<span class="nc" id="L319">            System.out.println(&quot;Autonomie restante: &quot; + String.format(&quot;%.1f%%&quot;, actif.getAutonomieRestante()));</span>
+        } else {
+<span class="nc" id="L321">            System.out.println(&quot;✗ Déplacement échoué !&quot;);</span>
+        }
+<span class="nc" id="L323">    }</span>
+
+    /**
+     * Vérifie les collisions.
+     */
+    private void verifierCollisions() {
+<span class="nc" id="L329">        List&lt;String&gt; alertes = gestionnaire.verifierToutesLesCollisions();</span>
+
+<span class="nc bnc" id="L331" title="All 2 branches missed.">        if (alertes.isEmpty()) {</span>
+<span class="nc" id="L332">            System.out.println(&quot;✓ Aucune collision détectée&quot;);</span>
+        } else {
+<span class="nc" id="L334">            System.out.println(&quot;⚠ Alertes de collision:&quot;);</span>
+<span class="nc" id="L335">            alertes.forEach(System.out::println);</span>
+        }
+<span class="nc" id="L337">    }</span>
+
+    /**
+     * Affiche l'état de la flotte.
+     */
+    private void afficherEtatFlotte() {
+<span class="nc" id="L343">        System.out.println(&quot;\n&quot; + gestionnaire.genererRapportFlotte());</span>
+
+<span class="nc" id="L345">        System.out.println(&quot;\nActifs détaillés:&quot;);</span>
+<span class="nc bnc" id="L346" title="All 2 branches missed.">        for (ActifMobile actif : gestionnaire.getTousLesActifs()) {</span>
+<span class="nc" id="L347">            System.out.println(&quot;  - &quot; + actif);</span>
+<span class="nc" id="L348">        }</span>
+<span class="nc" id="L349">    }</span>
+
+    /**
+     * Menu de configuration.
+     */
+    private void menuConfiguration() {
+<span class="nc" id="L355">        System.out.println(&quot;\n=== CONFIGURATION ===&quot;);</span>
+<span class="nc" id="L356">        System.out.println(&quot;1. Modifier intensité du vent&quot;);</span>
+<span class="nc" id="L357">        System.out.println(&quot;0. Retour&quot;);</span>
+
+<span class="nc" id="L359">        int choix = lireEntier(&quot;Votre choix: &quot;);</span>
+
+<span class="nc bnc" id="L361" title="All 2 branches missed.">        switch (choix) {</span>
+            case 1 -&gt; {
+<span class="nc" id="L363">                double intensite = lireDouble(&quot;Nouvelle intensité vent (0-100): &quot;);</span>
+<span class="nc" id="L364">                zoneOperation.setVent(new Vent(Math.PI / 4, intensite));</span>
+<span class="nc" id="L365">                System.out.println(&quot;✓ Vent modifié&quot;);</span>
+            }
+        }
+<span class="nc" id="L368">    }</span>
+
+    /**
+     * Lit un entier depuis la console.
+     */
+    private int lireEntier(String prompt) {
+<span class="nc" id="L374">        System.out.print(prompt);</span>
+<span class="nc bnc" id="L375" title="All 2 branches missed.">        while (!scanner.hasNextInt()) {</span>
+<span class="nc" id="L376">            scanner.next();</span>
+<span class="nc" id="L377">            System.out.print(prompt);</span>
+        }
+<span class="nc" id="L379">        int result = scanner.nextInt();</span>
+<span class="nc" id="L380">        scanner.nextLine(); // consume newline</span>
+<span class="nc" id="L381">        return result;</span>
+    }
+
+    /**
+     * Lit un double depuis la console.
+     */
+    private double lireDouble(String prompt) {
+<span class="nc" id="L388">        System.out.print(prompt);</span>
+<span class="nc bnc" id="L389" title="All 2 branches missed.">        while (!scanner.hasNextDouble()) {</span>
+<span class="nc" id="L390">            scanner.next();</span>
+<span class="nc" id="L391">            System.out.print(prompt);</span>
+        }
+<span class="nc" id="L393">        double result = scanner.nextDouble();</span>
+<span class="nc" id="L394">        scanner.nextLine(); // consume newline</span>
+<span class="nc" id="L395">        return result;</span>
+    }
+
+    /**
+     * Lit du texte depuis la console.
+     */
+    private String lireTexte(String prompt) {
+<span class="nc" id="L402">        System.out.print(prompt);</span>
+<span class="nc" id="L403">        return scanner.nextLine();</span>
+    }
+
+    /**
+     * Point d'entrée principal pour le mode CLI.
+     */
+    public static void main(String[] args) {
+<span class="nc" id="L410">        SPIGACli cli = new SPIGACli();</span>
+<span class="nc" id="L411">        cli.demarrer();</span>
+<span class="nc" id="L412">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

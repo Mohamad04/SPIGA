@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"fr.spiga.cli"},{"l":"fr.spiga.core"},{"l":"fr.spiga.environment"},{"l":"fr.spiga.fleet"},{"l":"fr.spiga.gui"},{"l":"fr.spiga.interfaces"},{"l":"fr.spiga.mission"}];updateSearchResults();

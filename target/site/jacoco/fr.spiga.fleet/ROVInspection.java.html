@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ROVInspection.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">SPIGA</a> &gt; <a href="index.source.html" class="el_package">fr.spiga.fleet</a> &gt; <span class="el_source">ROVInspection.java</span></div><h1>ROVInspection.java</h1><pre class="source lang-java linenums">package fr.spiga.fleet;
+
+import fr.spiga.core.Position3D;
+
+/**
+ * ROV d'inspection téléopéré spécialisé en inspection sous-marine.
+ * Extension du véhicule sous-marin avec caméras et bras manipulateur.
+ * 
+ * @author SPIGA Team
+ * @version 1.0
+ */
+public class ROVInspection extends VehiculeSousMarin {
+
+    private static final double VITESSE_MAX_DEFAUT = 5.0; // m/s (lent, précis)
+    private static final double AUTONOMIE_MAX_DEFAUT = 8.0; // heures
+
+    /** Nombre de caméras embarquées */
+    private final int nombreCameras;
+
+    /** Indique si le bras manipulateur est actif */
+    private boolean brasActif;
+
+    /**
+     * Constructeur avec paramètres par défaut.
+     * 
+     * @param position la position initiale
+     */
+    public ROVInspection(Position3D position) {
+<span class="nc" id="L29">        super(position, VITESSE_MAX_DEFAUT, AUTONOMIE_MAX_DEFAUT);</span>
+<span class="nc" id="L30">        this.nombreCameras = 4;</span>
+<span class="nc" id="L31">        this.brasActif = false;</span>
+<span class="nc" id="L32">    }</span>
+
+    public int getNombreCameras() {
+<span class="nc" id="L35">        return nombreCameras;</span>
+    }
+
+    public boolean isBrasActif() {
+<span class="nc" id="L39">        return brasActif;</span>
+    }
+
+    /**
+     * Active le bras manipulateur.
+     */
+    public void activerBras() {
+<span class="nc" id="L46">        brasActif = true;</span>
+<span class="nc" id="L47">    }</span>
+
+    /**
+     * Désactive le bras manipulateur.
+     */
+    public void desactiverBras() {
+<span class="nc" id="L53">        brasActif = false;</span>
+<span class="nc" id="L54">    }</span>
+
+    /**
+     * Effectue une inspection visuelle.
+     * 
+     * @return le résultat de l'inspection
+     */
+    public String effectuerInspection() {
+<span class="nc" id="L62">        return String.format(&quot;Inspection à %.1fm avec %d caméras - Bras: %s&quot;,</span>
+<span class="nc bnc" id="L63" title="All 2 branches missed.">                getProfondeur(), nombreCameras, brasActif ? &quot;actif&quot; : &quot;inactif&quot;);</span>
+    }
+
+    @Override
+    public String getType() {
+<span class="nc" id="L68">        return &quot;ROVInspection&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

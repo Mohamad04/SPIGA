@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Mission.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">SPIGA</a> &gt; <a href="index.source.html" class="el_package">fr.spiga.mission</a> &gt; <span class="el_source">Mission.java</span></div><h1>Mission.java</h1><pre class="source lang-java linenums">package fr.spiga.mission;
+
+import fr.spiga.core.ActifMobile;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * Classe abstraite représentant une mission.
+ * Définit la structure commune pour toutes les missions.
+ * 
+ * @author SPIGA Team
+ * @version 1.0
+ */
+public abstract class Mission implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    /** Identifiant unique de la mission */
+    private final String id;
+
+    /** Type de mission (ex: &quot;LOGISTIQUE&quot;, &quot;SURVEILLANCE&quot;) */
+    private final String type;
+
+    /** Statut de la mission (&quot;PLANIFIEE&quot;, &quot;EN_COURS&quot;, &quot;TERMINEE&quot;, &quot;ANNULEE&quot;) */
+    protected String statut;
+    protected String description;
+    protected double progres; // 0.0 to 1.0
+    protected boolean objectifAtteint;
+
+    /** Date/heure de début prévue */
+    private LocalDateTime debutPrevu;
+
+    /** Date/heure de fin prévue */
+    private LocalDateTime finPrevue;
+
+    /** Date/heure de début réel */
+    private LocalDateTime debutReel;
+
+    /** Date/heure de fin réelle */
+    private LocalDateTime finReelle;
+
+    /** Actifs assignés à la mission */
+    private final List&lt;ActifMobile&gt; actifsAssignes;
+
+    /** Résultats attendus */
+    private String resultatsAttendus;
+
+    /** Résultats obtenus */
+    private String resultatsObtenus;
+
+    /**
+     * Constructeur protégé pour les sous-classes.
+     * 
+     * @param type              le type de mission
+     * @param debutPrevu        la date/heure de début prévue
+     * @param finPrevue         la date/heure de fin prévue
+     * @param resultatsAttendus les résultats attendus
+     */
+    protected Mission(String type, LocalDateTime debutPrevu, LocalDateTime finPrevue,
+<span class="fc" id="L62">            String resultatsAttendus) {</span>
+<span class="pc bpc" id="L63" title="1 of 2 branches missed.">        if (type == null) {</span>
+<span class="nc" id="L64">            throw new IllegalArgumentException(&quot;Le type de mission ne peut pas être nul&quot;);</span>
+        }
+<span class="pc bpc" id="L66" title="2 of 4 branches missed.">        if (debutPrevu == null || finPrevue == null) {</span>
+<span class="nc" id="L67">            throw new IllegalArgumentException(&quot;Les dates ne peuvent pas être nulles&quot;);</span>
+        }
+<span class="pc bpc" id="L69" title="1 of 2 branches missed.">        if (debutPrevu.isAfter(finPrevue)) {</span>
+<span class="nc" id="L70">            throw new IllegalArgumentException(&quot;La date de début doit être avant la date de fin&quot;);</span>
+        }
+
+<span class="fc" id="L73">        this.id = UUID.randomUUID().toString();</span>
+<span class="fc" id="L74">        this.type = type;</span>
+<span class="fc" id="L75">        this.statut = &quot;PLANIFIEE&quot;;</span>
+<span class="fc" id="L76">        this.debutPrevu = debutPrevu;</span>
+<span class="fc" id="L77">        this.finPrevue = finPrevue;</span>
+<span class="fc" id="L78">        this.resultatsAttendus = resultatsAttendus;</span>
+<span class="fc" id="L79">        this.actifsAssignes = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L80">    }</span>
+
+    public String getId() {
+<span class="nc" id="L83">        return id;</span>
+    }
+
+    public String getType() {
+<span class="nc" id="L87">        return type;</span>
+    }
+
+    public String getStatut() {
+<span class="fc" id="L91">        return statut;</span>
+    }
+
+    public LocalDateTime getDebutPrevu() {
+<span class="nc" id="L95">        return debutPrevu;</span>
+    }
+
+    public LocalDateTime getFinPrevue() {
+<span class="nc" id="L99">        return finPrevue;</span>
+    }
+
+    public LocalDateTime getDebutReel() {
+<span class="nc" id="L103">        return debutReel;</span>
+    }
+
+    public LocalDateTime getFinReelle() {
+<span class="nc" id="L107">        return finReelle;</span>
+    }
+
+    public List&lt;ActifMobile&gt; getActifsAssignes() {
+<span class="fc" id="L111">        return new ArrayList&lt;&gt;(actifsAssignes);</span>
+    }
+
+    public String getResultatsAttendus() {
+<span class="nc" id="L115">        return resultatsAttendus;</span>
+    }
+
+    public String getResultatsObtenus() {
+<span class="fc" id="L119">        return resultatsObtenus;</span>
+    }
+
+    /** Zone d'opération associée à la mission */
+    protected fr.spiga.environment.ZoneOperation zoneOperation;
+
+    /**
+     * Vérifie si un actif est compatible avec cette mission.
+     * 
+     * @param actif l'actif à vérifier
+     * @return true si compatible, false sinon
+     */
+    public abstract boolean estCompatible(ActifMobile actif);
+
+    /**
+     * Assigne un actif à la mission.
+     * 
+     * @param actif l'actif à assigner
+     * @return true si assignation réussie, false sinon
+     */
+    public boolean assignerActif(ActifMobile actif) {
+<span class="pc bpc" id="L140" title="2 of 4 branches missed.">        if (actif == null || actifsAssignes.contains(actif)) {</span>
+<span class="nc" id="L141">            return false;</span>
+        }
+<span class="pc bpc" id="L143" title="1 of 2 branches missed.">        if (!&quot;PLANIFIEE&quot;.equals(statut)) {</span>
+<span class="nc" id="L144">            return false; // Impossible d'assigner si mission déjà lancée</span>
+        }
+<span class="pc bpc" id="L146" title="1 of 2 branches missed.">        if (actif.getEtatOperationnel() != fr.spiga.core.EtatOperationnel.AU_SOL) {</span>
+<span class="nc" id="L147">            System.out.println(&quot;Actif &quot; + actif.getId() + &quot; indisponible (état: &quot; + actif.getEtatOperationnel() + &quot;)&quot;);</span>
+<span class="nc" id="L148">            return false;</span>
+        }
+<span class="fc bfc" id="L150" title="All 2 branches covered.">        if (!estCompatible(actif)) {</span>
+<span class="fc" id="L151">            System.out.println(&quot;Actif &quot; + actif.getId() + &quot; incompatible avec la mission &quot; + getNom());</span>
+<span class="fc" id="L152">            return false;</span>
+        }
+<span class="fc" id="L154">        return actifsAssignes.add(actif);</span>
+    }
+
+    /**
+     * Assigne tous les membres d'un essaim à la mission.
+     * 
+     * @param essaim l'essaim à assigner
+     * @return true si au moins un actif a été assigné
+     */
+    public boolean assignerEssaim(fr.spiga.fleet.Essaim essaim) {
+<span class="nc bnc" id="L164" title="All 4 branches missed.">        if (essaim == null || !&quot;PLANIFIEE&quot;.equals(statut)) {</span>
+<span class="nc" id="L165">            return false;</span>
+        }
+<span class="nc" id="L167">        boolean assigned = false;</span>
+<span class="nc bnc" id="L168" title="All 2 branches missed.">        for (ActifMobile actif : essaim.getActifs()) {</span>
+<span class="nc bnc" id="L169" title="All 2 branches missed.">            if (assignerActif(actif)) {</span>
+<span class="nc" id="L170">                assigned = true;</span>
+            }
+<span class="nc" id="L172">        }</span>
+<span class="nc" id="L173">        return assigned;</span>
+    }
+
+    /**
+     * Démarre la mission.
+     * 
+     * @return true si démarrage réussi, false sinon
+     */
+    public boolean demarrer() {
+<span class="pc bpc" id="L182" title="1 of 2 branches missed.">        if (!&quot;PLANIFIEE&quot;.equals(statut)) {</span>
+<span class="nc" id="L183">            return false;</span>
+        }
+<span class="pc bpc" id="L185" title="1 of 2 branches missed.">        if (actifsAssignes.isEmpty()) {</span>
+<span class="nc" id="L186">            System.out.println(&quot;Impossible de démarrer: aucun actif assigné&quot;);</span>
+<span class="nc" id="L187">            return false;</span>
+        }
+
+<span class="fc" id="L190">        this.statut = &quot;EN_COURS&quot;;</span>
+<span class="fc" id="L191">        this.debutReel = LocalDateTime.now();</span>
+
+        // Démarrer tous les actifs assignés
+<span class="fc bfc" id="L194" title="All 2 branches covered.">        for (ActifMobile actif : actifsAssignes) {</span>
+<span class="fc" id="L195">            actif.demarrer();</span>
+<span class="fc" id="L196">        }</span>
+
+<span class="fc" id="L198">        return true;</span>
+    }
+
+    /**
+     * Termine la mission avec succès.
+     * 
+     * @param resultats les résultats obtenus
+     * @return true si terminaison réussie, false sinon
+     */
+    public boolean terminer(String resultats) {
+<span class="pc bpc" id="L208" title="1 of 2 branches missed.">        if (!&quot;EN_COURS&quot;.equals(statut)) {</span>
+<span class="nc" id="L209">            return false;</span>
+        }
+
+<span class="fc" id="L212">        this.statut = &quot;TERMINEE&quot;;</span>
+<span class="fc" id="L213">        this.finReelle = LocalDateTime.now();</span>
+<span class="fc" id="L214">        this.resultatsObtenus = resultats;</span>
+
+        // Réinitialiser l'état des actifs pour qu'ils soient de nouveau disponibles
+<span class="fc bfc" id="L217" title="All 2 branches covered.">        for (ActifMobile actif : actifsAssignes) {</span>
+<span class="fc" id="L218">            actif.eteindre();</span>
+<span class="fc" id="L219">            actif.setEtatOperationnel(fr.spiga.core.EtatOperationnel.AU_SOL);</span>
+<span class="fc" id="L220">        }</span>
+
+<span class="fc" id="L222">        return true;</span>
+    }
+
+    public boolean annuler(String raison) {
+<span class="nc bnc" id="L226" title="All 4 branches missed.">        if (&quot;TERMINEE&quot;.equals(statut) || &quot;ANNULEE&quot;.equals(statut)) {</span>
+<span class="nc" id="L227">            return false;</span>
+        }
+
+<span class="nc" id="L230">        this.statut = &quot;ANNULEE&quot;;</span>
+<span class="nc" id="L231">        this.resultatsObtenus = &quot;Mission annulée: &quot; + raison;</span>
+
+<span class="nc bnc" id="L233" title="All 2 branches missed.">        if (debutReel != null) {</span>
+<span class="nc" id="L234">            this.finReelle = LocalDateTime.now();</span>
+        }
+
+        // Les actifs ne sont plus éteints automatiquement ici.
+        // La logique de mission doit s'assurer qu'ils sont rentrés à la base.
+        // Si besoin, on pourra ajouter une vérification ou un warning si on termine
+        // alors qu'ils sont en vol.
+
+<span class="nc" id="L242">        return true;</span>
+    }
+
+    public fr.spiga.environment.ZoneOperation getZoneOperation() {
+<span class="nc" id="L246">        return zoneOperation;</span>
+    }
+
+    public void setZoneOperation(fr.spiga.environment.ZoneOperation zoneOperation) {
+<span class="nc" id="L250">        this.zoneOperation = zoneOperation;</span>
+<span class="nc" id="L251">    }</span>
+
+    public void mettreAJour(double dt) {
+<span class="nc bnc" id="L254" title="All 2 branches missed.">        if (!&quot;EN_COURS&quot;.equals(statut)) {</span>
+<span class="nc" id="L255">            return;</span>
+        }
+
+        // Vérifier si des actifs assignés sont revenus à un état disponible (AU_SOL)
+        // après une panne ou rechargement, et les remettre en mission.
+<span class="nc bnc" id="L260" title="All 2 branches missed.">        for (ActifMobile actif : actifsAssignes) {</span>
+<span class="nc bnc" id="L261" title="All 2 branches missed.">            if (actif.getEtatOperationnel() == fr.spiga.core.EtatOperationnel.AU_SOL) {</span>
+<span class="nc" id="L262">                System.out.println(&quot;Actif &quot; + actif.getId() + &quot; de nouveau opérationnel. Reprise de mission.&quot;);</span>
+<span class="nc" id="L263">                actif.demarrer(); // Remet en état EN_MISSION</span>
+            }
+<span class="nc" id="L265">        }</span>
+
+<span class="nc" id="L267">        mettreAJourSpecifique(dt);</span>
+<span class="nc" id="L268">    }</span>
+
+    /**
+     * Met à jour la logique spécifique de la mission (implémenté par les
+     * sous-classes).
+     * 
+     * @param dt le temps écoulé
+     */
+    protected abstract void mettreAJourSpecifique(double dt);
+
+    /**
+     * Obtient le nom descriptif de la mission.
+     * 
+     * @return le nom de la mission
+     */
+    public abstract String getNom();
+
+    /**
+     * Obtient l'objectif clair de la mission.
+     * 
+     * @return la description de l'objectif
+     */
+    public String getObjectif() {
+<span class="nc" id="L291">        return resultatsAttendus;</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L296">        return String.format(&quot;%s [ID: %s] - %s (Statut: %s)&quot;,</span>
+<span class="nc" id="L297">                getNom(), id.substring(0, 8), getObjectif(), statut);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

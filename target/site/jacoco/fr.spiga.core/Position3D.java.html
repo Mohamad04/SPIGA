@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Position3D.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">SPIGA</a> &gt; <a href="index.source.html" class="el_package">fr.spiga.core</a> &gt; <span class="el_source">Position3D.java</span></div><h1>Position3D.java</h1><pre class="source lang-java linenums">package fr.spiga.core;
+
+import java.io.Serializable;
+import java.util.Objects;
+
+/**
+ * Classe représentant une position en trois dimensions (X, Y, Z).
+ * Cette classe est immuable et sérialisable.
+ * 
+ * &lt;p&gt;
+ * Les coordonnées sont en mètres :
+ * &lt;ul&gt;
+ * &lt;li&gt;X : coordonnée est-ouest&lt;/li&gt;
+ * &lt;li&gt;Y : coordonnée nord-sud&lt;/li&gt;
+ * &lt;li&gt;Z : altitude (positive vers le haut) ou profondeur (négative sous
+ * l'eau)&lt;/li&gt;
+ * &lt;/ul&gt;
+ * 
+ * @author SPIGA Team
+ * @version 1.0
+ */
+public final class Position3D implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    private final double x;
+    private final double y;
+    private final double z;
+
+    /**
+     * Constructeur d'une position 3D.
+     * 
+     * @param x la coordonnée X en mètres
+     * @param y la coordonnée Y en mètres
+     * @param z la coordonnée Z en mètres (altitude/profondeur)
+     */
+<span class="fc" id="L36">    public Position3D(double x, double y, double z) {</span>
+<span class="fc" id="L37">        this.x = x;</span>
+<span class="fc" id="L38">        this.y = y;</span>
+<span class="fc" id="L39">        this.z = z;</span>
+<span class="fc" id="L40">    }</span>
+
+    /**
+     * Obtient la coordonnée X.
+     * 
+     * @return la coordonnée X
+     */
+    public double getX() {
+<span class="fc" id="L48">        return x;</span>
+    }
+
+    /**
+     * Obtient la coordonnée Y.
+     * 
+     * @return la coordonnée Y
+     */
+    public double getY() {
+<span class="fc" id="L57">        return y;</span>
+    }
+
+    /**
+     * Obtient la coordonnée Z.
+     * 
+     * @return la coordonnée Z
+     */
+    public double getZ() {
+<span class="fc" id="L66">        return z;</span>
+    }
+
+    /**
+     * Calcule la distance euclidienne 3D vers une autre position.
+     * 
+     * @param autre l'autre position
+     * @return la distance en mètres
+     */
+    public double distanceVers(Position3D autre) {
+<span class="fc" id="L76">        double dx = autre.x - this.x;</span>
+<span class="fc" id="L77">        double dy = autre.y - this.y;</span>
+<span class="fc" id="L78">        double dz = autre.z - this.z;</span>
+<span class="fc" id="L79">        return Math.sqrt(dx * dx + dy * dy + dz * dz);</span>
+    }
+
+    /**
+     * Calcule la distance 2D (sans tenir compte de Z) vers une autre position.
+     * Utile pour les calculs de distance au sol.
+     * 
+     * @param autre l'autre position
+     * @return la distance 2D en mètres
+     */
+    public double distance2DVers(Position3D autre) {
+<span class="fc" id="L90">        double dx = autre.x - this.x;</span>
+<span class="fc" id="L91">        double dy = autre.y - this.y;</span>
+<span class="fc" id="L92">        return Math.sqrt(dx * dx + dy * dy);</span>
+    }
+
+    /**
+     * Calcule la norme (magnitude) de la position comme s'il s'agissait d'un
+     * vecteur.
+     * 
+     * @return la norme
+     */
+    public double norme() {
+<span class="nc" id="L102">        return Math.sqrt(x * x + y * y + z * z);</span>
+    }
+
+    /**
+     * Ajoute une autre position à celle-ci.
+     * 
+     * @param autre l'autre position
+     * @return une nouvelle position résultant de l'addition
+     */
+    public Position3D plus(Position3D autre) {
+<span class="nc" id="L112">        return new Position3D(this.x + autre.x, this.y + autre.y, this.z + autre.z);</span>
+    }
+
+    /**
+     * Soustrait une autre position de celle-ci.
+     * 
+     * @param autre l'autre position
+     * @return une nouvelle position résultant de la soustraction
+     */
+    public Position3D moins(Position3D autre) {
+<span class="nc" id="L122">        return new Position3D(this.x - autre.x, this.y - autre.y, this.z - autre.z);</span>
+    }
+
+    @Override
+    public boolean equals(Object o) {
+<span class="fc bfc" id="L127" title="All 2 branches covered.">        if (this == o)</span>
+<span class="fc" id="L128">            return true;</span>
+<span class="pc bpc" id="L129" title="2 of 4 branches missed.">        if (o == null || getClass() != o.getClass())</span>
+<span class="nc" id="L130">            return false;</span>
+<span class="fc" id="L131">        Position3D that = (Position3D) o;</span>
+<span class="pc bpc" id="L132" title="1 of 2 branches missed.">        return Double.compare(that.x, x) == 0 &amp;&amp;</span>
+<span class="pc bpc" id="L133" title="1 of 2 branches missed.">                Double.compare(that.y, y) == 0 &amp;&amp;</span>
+<span class="fc bfc" id="L134" title="All 2 branches covered.">                Double.compare(that.z, z) == 0;</span>
+    }
+
+    @Override
+    public int hashCode() {
+<span class="nc" id="L139">        return Objects.hash(x, y, z);</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="fc" id="L144">        return String.format(&quot;Position3D(x=%.2f, y=%.2f, z=%.2f)&quot;, x, y, z);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

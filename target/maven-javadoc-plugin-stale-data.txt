@@ -1,0 +1,61 @@
+@options
+@packages
+-classpath
+'C:/Users/Felipe/.m2/repository/org/openjfx/javafx-controls/17.0.2/javafx-controls-17.0.2.jar;C:/Users/Felipe/.m2/repository/org/openjfx/javafx-controls/17.0.2/javafx-controls-17.0.2-win.jar;C:/Users/Felipe/.m2/repository/org/openjfx/javafx-fxml/17.0.2/javafx-fxml-17.0.2.jar;C:/Users/Felipe/.m2/repository/org/openjfx/javafx-fxml/17.0.2/javafx-fxml-17.0.2-win.jar;C:/Users/Felipe/.m2/repository/org/openjfx/javafx-graphics/17.0.2/javafx-graphics-17.0.2.jar;C:/Users/Felipe/.m2/repository/org/openjfx/javafx-graphics/17.0.2/javafx-graphics-17.0.2-win.jar;C:/Users/Felipe/.m2/repository/org/openjfx/javafx-base/17.0.2/javafx-base-17.0.2.jar;C:/Users/Felipe/.m2/repository/org/openjfx/javafx-base/17.0.2/javafx-base-17.0.2-win.jar'
+-encoding
+'UTF-8'
+-private
+-source
+'17'
+-sourcepath
+'C:/Users/Felipe/Downloads/spiga_structure/src/main/java'
+-author
+-bottom
+'Copyright &#169; 2026. All rights reserved.'
+-charset
+'UTF-8'
+-d
+'C:/Users/Felipe/Downloads/spiga_structure/target/site/apidocs'
+-docencoding
+'UTF-8'
+-doctitle
+'SPIGA 1.0.0 API'
+-nohelp
+-use
+-version
+-windowtitle
+'SPIGA 1.0.0 API'
+fr.spiga.cli
+fr.spiga.core
+fr.spiga.environment
+fr.spiga.fleet
+fr.spiga.gui
+fr.spiga.interfaces
+fr.spiga.mission
+C:\Users\Felipe\.m2\repository\org\openjfx\javafx-controls\17.0.2\javafx-controls-17.0.2.jar = 1767466427409
+C:\Users\Felipe\.m2\repository\org\openjfx\javafx-controls\17.0.2\javafx-controls-17.0.2-win.jar = 1767466428008
+C:\Users\Felipe\.m2\repository\org\openjfx\javafx-fxml\17.0.2\javafx-fxml-17.0.2.jar = 1767466427537
+C:\Users\Felipe\.m2\repository\org\openjfx\javafx-fxml\17.0.2\javafx-fxml-17.0.2-win.jar = 1767466427632
+C:\Users\Felipe\.m2\repository\org\openjfx\javafx-graphics\17.0.2\javafx-graphics-17.0.2.jar = 1767466427537
+C:\Users\Felipe\.m2\repository\org\openjfx\javafx-graphics\17.0.2\javafx-graphics-17.0.2-win.jar = 1767466428494
+C:\Users\Felipe\.m2\repository\org\openjfx\javafx-base\17.0.2\javafx-base-17.0.2.jar = 1767466427754
+C:\Users\Felipe\.m2\repository\org\openjfx\javafx-base\17.0.2\javafx-base-17.0.2-win.jar = 1767466427929
+C:\Users\Felipe\Downloads\spiga_structure\src\main\java = 1767466439309
+C:\Users\Felipe\Downloads\spiga_structure\target\site\apidocs\allclasses-index.html = 1767563881211
+C:\Users\Felipe\Downloads\spiga_structure\target\site\apidocs\allpackages-index.html = 1767563881221
+C:\Users\Felipe\Downloads\spiga_structure\target\site\apidocs\constant-values.html = 1767563880625
+C:\Users\Felipe\Downloads\spiga_structure\target\site\apidocs\element-list = 1767563880474
+C:\Users\Felipe\Downloads\spiga_structure\target\site\apidocs\index-all.html = 1767563881316
+C:\Users\Felipe\Downloads\spiga_structure\target\site\apidocs\index.html = 1767563881143
+C:\Users\Felipe\Downloads\spiga_structure\target\site\apidocs\jquery-ui.overrides.css = 1767563881377
+C:\Users\Felipe\Downloads\spiga_structure\target\site\apidocs\member-search-index.js = 1767563881244
+C:\Users\Felipe\Downloads\spiga_structure\target\site\apidocs\module-search-index.js = 1767563881226
+C:\Users\Felipe\Downloads\spiga_structure\target\site\apidocs\overview-summary.html = 1767563881319
+C:\Users\Felipe\Downloads\spiga_structure\target\site\apidocs\overview-tree.html = 1767563881135
+C:\Users\Felipe\Downloads\spiga_structure\target\site\apidocs\package-search-index.js = 1767563881230
+C:\Users\Felipe\Downloads\spiga_structure\target\site\apidocs\script.js = 1767563881328
+C:\Users\Felipe\Downloads\spiga_structure\target\site\apidocs\search.js = 1767563881333
+C:\Users\Felipe\Downloads\spiga_structure\target\site\apidocs\serialized-form.html = 1767563880665
+C:\Users\Felipe\Downloads\spiga_structure\target\site\apidocs\stylesheet.css = 1767563881325
+C:\Users\Felipe\Downloads\spiga_structure\target\site\apidocs\tag-search-index.js = 1767563881250
+C:\Users\Felipe\Downloads\spiga_structure\target\site\apidocs\type-search-index.js = 1767563881235

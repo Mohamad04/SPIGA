@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Obstacle.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">SPIGA</a> &gt; <a href="index.source.html" class="el_package">fr.spiga.environment</a> &gt; <span class="el_source">Obstacle.java</span></div><h1>Obstacle.java</h1><pre class="source lang-java linenums">package fr.spiga.environment;
+
+import fr.spiga.core.Position3D;
+import java.io.Serializable;
+
+/**
+ * Classe représentant un obstacle fixe dans la zone d'opération.
+ * Les obstacles peuvent être des montagnes, structures, récifs, etc.
+ * 
+ * @author SPIGA Team
+ * @version 1.0
+ */
+public class Obstacle implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    /** Position centrale de l'obstacle */
+    private final Position3D position;
+
+    /** Rayon de l'obstacle en mètres */
+    private final double rayon;
+
+    /** Altitude/Profondeur minimale */
+    private final double zMin;
+
+    /** Altitude/Profondeur maximale */
+    private final double zMax;
+
+    /** Type d'obstacle */
+    private final String type;
+
+    /**
+     * Constructeur d'un obstacle.
+     * 
+     * @param position la position centrale
+     * @param rayon    le rayon en mètres
+     * @param type     le type d'obstacle
+     */
+    public Obstacle(Position3D position, double rayon, String type) {
+<span class="fc" id="L39">        this(position, rayon, -Double.MAX_VALUE, Double.MAX_VALUE, type);</span>
+<span class="fc" id="L40">    }</span>
+
+    /**
+     * Constructeur complet d'un obstacle avec limites de hauteur.
+     * 
+     * @param position la position centrale
+     * @param rayon    le rayon en mètres
+     * @param zMin     altitude minimale
+     * @param zMax     altitude maximale
+     * @param type     le type d'obstacle
+     */
+<span class="fc" id="L51">    public Obstacle(Position3D position, double rayon, double zMin, double zMax, String type) {</span>
+<span class="pc bpc" id="L52" title="1 of 2 branches missed.">        if (position == null) {</span>
+<span class="nc" id="L53">            throw new IllegalArgumentException(&quot;La position ne peut pas être nulle&quot;);</span>
+        }
+<span class="pc bpc" id="L55" title="1 of 2 branches missed.">        if (rayon &lt;= 0) {</span>
+<span class="nc" id="L56">            throw new IllegalArgumentException(&quot;Le rayon doit être positif&quot;);</span>
+        }
+<span class="pc bpc" id="L58" title="2 of 4 branches missed.">        if (type == null || type.isBlank()) {</span>
+<span class="nc" id="L59">            throw new IllegalArgumentException(&quot;Le type ne peut pas être vide&quot;);</span>
+        }
+
+<span class="fc" id="L62">        this.position = position;</span>
+<span class="fc" id="L63">        this.rayon = rayon;</span>
+<span class="fc" id="L64">        this.zMin = zMin;</span>
+<span class="fc" id="L65">        this.zMax = zMax;</span>
+<span class="fc" id="L66">        this.type = type;</span>
+<span class="fc" id="L67">    }</span>
+
+    public Position3D getPosition() {
+<span class="fc" id="L70">        return position;</span>
+    }
+
+    public double getRayon() {
+<span class="fc" id="L74">        return rayon;</span>
+    }
+
+    public double getZMin() {
+<span class="nc" id="L78">        return zMin;</span>
+    }
+
+    public double getZMax() {
+<span class="fc" id="L82">        return zMax;</span>
+    }
+
+    public String getType() {
+<span class="nc" id="L86">        return type;</span>
+    }
+
+    /**
+     * Vérifie si une position est en collision avec cet obstacle.
+     * Prend en compte le rayon (cylindre) e a faixa de Z.
+     * 
+     * @param pos la position à vérifier
+     * @return true si collision, false sinon
+     */
+    public boolean estEnCollision(Position3D pos) {
+        // Vérifier d'abord la hauteur
+<span class="pc bpc" id="L98" title="2 of 4 branches missed.">        if (pos.getZ() &lt; zMin || pos.getZ() &gt; zMax) {</span>
+<span class="nc" id="L99">            return false;</span>
+        }
+
+        // Vérifier le rayon (distance en 2D pour un cylindre vertical)
+<span class="fc" id="L103">        double dx = pos.getX() - position.getX();</span>
+<span class="fc" id="L104">        double dy = pos.getY() - position.getY();</span>
+<span class="fc" id="L105">        double distance2D = Math.sqrt(dx * dx + dy * dy);</span>
+
+<span class="fc bfc" id="L107" title="All 2 branches covered.">        return distance2D &lt; rayon;</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L112">        return String.format(&quot;Obstacle[type=%s, position=%s, rayon=%.1fm]&quot;,</span>
+<span class="nc" id="L113">                type, position, rayon);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

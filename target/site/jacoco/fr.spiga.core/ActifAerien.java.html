@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ActifAerien.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">SPIGA</a> &gt; <a href="index.source.html" class="el_package">fr.spiga.core</a> &gt; <span class="el_source">ActifAerien.java</span></div><h1>ActifAerien.java</h1><pre class="source lang-java linenums">package fr.spiga.core;
+
+import fr.spiga.environment.Vent;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Classe abstraite représentant un actif aérien.
+ * Les drones et autres véhicules aériens héritent de cette classe.
+ * 
+ * &lt;p&gt;
+ * Les actifs aériens évoluent principalement en 2D (X, Y) avec une composante
+ * Z (altitude). Ils sont sensibles aux facteurs atmosphériques comme le vent.
+ * 
+ * @author SPIGA Team
+ * @version 1.0
+ */
+public abstract class ActifAerien extends ActifMobile {
+
+    /** Altitude maximale opérationnelle en mètres */
+    private final double altitudeMax;
+
+    /** Sensibilité au vent (facteur multiplicateur de consommation) */
+    private final double sensibiliteVent;
+
+    /**
+     * Constructeur pour les actifs aériens.
+     * 
+     * @param position        la position initiale
+     * @param vitesseMax      la vitesse maximale en m/s
+     * @param autonomieMax    l'autonomie maximale en heures
+     * @param altitudeMax     l'altitude maximale en mètres
+     * @param sensibiliteVent le facteur de sensibilité au vent (1.0 = normal)
+     */
+    protected ActifAerien(Position3D position, double vitesseMax, double autonomieMax,
+            double altitudeMax, double sensibiliteVent) {
+<span class="fc" id="L37">        super(position, vitesseMax, autonomieMax);</span>
+
+<span class="pc bpc" id="L39" title="1 of 2 branches missed.">        if (altitudeMax &lt;= 0) {</span>
+<span class="nc" id="L40">            throw new IllegalArgumentException(&quot;L'altitude maximale doit être positive&quot;);</span>
+        }
+<span class="pc bpc" id="L42" title="1 of 2 branches missed.">        if (sensibiliteVent &lt; 0) {</span>
+<span class="nc" id="L43">            throw new IllegalArgumentException(&quot;La sensibilité au vent ne peut pas être négative&quot;);</span>
+        }
+
+<span class="fc" id="L46">        this.altitudeMax = altitudeMax;</span>
+<span class="fc" id="L47">        this.sensibiliteVent = sensibiliteVent;</span>
+<span class="fc" id="L48">    }</span>
+
+    public double getAltitudeMax() {
+<span class="nc" id="L51">        return altitudeMax;</span>
+    }
+
+    public double getSensibiliteVent() {
+<span class="nc" id="L55">        return sensibiliteVent;</span>
+    }
+
+    /**
+     * Obtient l'altitude actuelle de l'actif.
+     * 
+     * @return l'altitude actuelle en mètres
+     */
+    public double getAltitude() {
+<span class="nc" id="L64">        return getPosition().getZ();</span>
+    }
+
+    @Override
+    protected void setPosition(Position3D nouvellePosition) {
+<span class="pc bpc" id="L69" title="1 of 2 branches missed.">        if (nouvellePosition == null) {</span>
+<span class="nc" id="L70">            throw new IllegalArgumentException(&quot;La position ne peut pas être nulle&quot;);</span>
+        }
+<span class="pc bpc" id="L72" title="1 of 2 branches missed.">        if (!estAltitudeValide(nouvellePosition.getZ())) {</span>
+<span class="nc" id="L73">            throw new IllegalArgumentException(&quot;Altitude invalide pour cet actif aérien: &quot; + nouvellePosition.getZ());</span>
+        }
+<span class="fc" id="L75">        super.setPosition(nouvellePosition);</span>
+<span class="fc" id="L76">    }</span>
+
+    /**
+     * Vérifie si l'altitude est valide pour cet actif.
+     * 
+     * @param altitude l'altitude à vérifier
+     * @return true si valide, false sinon
+     */
+    protected boolean estAltitudeValide(double altitude) {
+<span class="pc bpc" id="L85" title="2 of 4 branches missed.">        return altitude &gt;= 0 &amp;&amp; altitude &lt;= altitudeMax;</span>
+    }
+
+    @Override
+    public boolean deplacer(Position3D cible) {
+<span class="nc bnc" id="L90" title="All 2 branches missed.">        if (cible == null) {</span>
+<span class="nc" id="L91">            return false;</span>
+        }
+
+        // Vérifier l'altitude
+<span class="nc bnc" id="L95" title="All 2 branches missed.">        if (!estAltitudeValide(cible.getZ())) {</span>
+<span class="nc" id="L96">            System.out.println(&quot;Altitude cible invalide: &quot; + cible.getZ() +</span>
+                    &quot; (max: &quot; + altitudeMax + &quot;)&quot;);
+<span class="nc" id="L98">            notifierEtatCritique(&quot;ALTITUDE_INVALIDE&quot;);</span>
+<span class="nc" id="L99">            return false;</span>
+        }
+
+        // Vérifier l'autonomie
+<span class="nc" id="L103">        double distance = getPosition().distanceVers(cible);</span>
+<span class="nc" id="L104">        double consommation = calculerConsommation(distance);</span>
+
+<span class="nc bnc" id="L106" title="All 2 branches missed.">        if (consommation &gt; getAutonomieRestante()) {</span>
+<span class="nc" id="L107">            System.out.println(&quot;Autonomie insuffisante pour atteindre la cible&quot;);</span>
+<span class="nc" id="L108">            notifierEtatCritique(&quot;BATTERIE_CRITIQUE&quot;);</span>
+<span class="nc" id="L109">            return false;</span>
+        }
+
+        // Vérifier la zone d'opération
+<span class="nc bnc" id="L113" title="All 4 branches missed.">        if (zoneOperation != null &amp;&amp; !zoneOperation.estDansZone(cible)) {</span>
+<span class="nc" id="L114">            System.out.println(&quot;Cible hors de la zone d'opération&quot;);</span>
+<span class="nc" id="L115">            notifierEtatCritique(&quot;ZONE_INTERDITE&quot;);</span>
+<span class="nc" id="L116">            return false;</span>
+        }
+
+        // Effectuer le déplacement
+<span class="nc" id="L120">        setPosition(cible);</span>
+<span class="nc" id="L121">        consommerAutonomie(consommation);</span>
+
+<span class="nc" id="L123">        return true;</span>
+    }
+
+    @Override
+    public List&lt;Position3D&gt; calculerTrajet(Position3D cible) {
+<span class="nc" id="L128">        List&lt;Position3D&gt; trajet = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L129">        trajet.add(getPosition());</span>
+
+        // Trajet simple en ligne droite
+        // Dans une implémentation avancée, on pourrait éviter les obstacles
+<span class="nc" id="L133">        trajet.add(cible);</span>
+
+<span class="nc" id="L135">        return trajet;</span>
+    }
+
+    @Override
+    protected double calculerConsommation(double distance) {
+<span class="fc" id="L140">        double consommationBase = super.calculerConsommation(distance);</span>
+
+        // Ajuster selon le vent (sensibilité)
+<span class="pc bpc" id="L143" title="1 of 2 branches missed.">        if (zoneOperation != null) {</span>
+<span class="fc" id="L144">            Vent vent = zoneOperation.getVent();</span>
+<span class="pc bpc" id="L145" title="1 of 2 branches missed.">            if (vent != null) {</span>
+                // Si on va CONTRE le vent, on consomme plus.
+                // Pour simplifier ici, on garde le facteur d'intensité
+<span class="fc" id="L148">                double facteurVent = 1.0 + (vent.getIntensite() / 100.0) * sensibiliteVent;</span>
+<span class="fc" id="L149">                consommationBase *= facteurVent;</span>
+            }
+
+            // Précipitations : la pluie alourdit et augmente la traînée
+<span class="fc" id="L153">            fr.spiga.environment.Precipitation precip = zoneOperation.getPrecipitation();</span>
+<span class="pc bpc" id="L154" title="2 of 4 branches missed.">            if (precip != null &amp;&amp; precip.getIntensite() &gt; 0) {</span>
+<span class="nc" id="L155">                consommationBase *= (1.0 + precip.getIntensite() / 200.0);</span>
+            }
+        }
+
+        // Ajuster selon l'altitude (plus haut = plus de consommation)
+<span class="fc" id="L160">        double altitude = getPosition().getZ();</span>
+<span class="fc" id="L161">        double facteurAltitude = 1.0 + (altitude / altitudeMax) * 0.2;</span>
+<span class="fc" id="L162">        consommationBase *= facteurAltitude;</span>
+
+<span class="fc" id="L164">        return consommationBase;</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L169">        return String.format(&quot;%s[altitude=%.1fm, altitudeMax=%.1fm]&quot;,</span>
+<span class="nc" id="L170">                super.toString(), getAltitude(), altitudeMax);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

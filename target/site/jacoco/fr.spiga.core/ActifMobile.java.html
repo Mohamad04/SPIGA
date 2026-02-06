@@ -1,0 +1,568 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ActifMobile.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">SPIGA</a> &gt; <a href="index.source.html" class="el_package">fr.spiga.core</a> &gt; <span class="el_source">ActifMobile.java</span></div><h1>ActifMobile.java</h1><pre class="source lang-java linenums">package fr.spiga.core;
+
+import fr.spiga.interfaces.*;
+import fr.spiga.environment.ZoneOperation;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * Classe abstraite représentant la base de tous les actifs mobiles.
+ * Centralise les attributs et comportements fondamentaux communs à tous les
+ * engins.
+ * 
+ * &lt;p&gt;
+ * Cette classe implémente les principes SOLID :
+ * &lt;ul&gt;
+ * &lt;li&gt;SRP : Responsabilité unique de gestion d'actif mobile&lt;/li&gt;
+ * &lt;li&gt;OCP : Ouverte à l'extension via héritage, fermée à la modification&lt;/li&gt;
+ * &lt;li&gt;LSP : Les sous-classes peuvent remplacer ActifMobile&lt;/li&gt;
+ * &lt;li&gt;ISP : Les interfaces sont ségrégées par comportement&lt;/li&gt;
+ * &lt;/ul&gt;
+ * 
+ * @author SPIGA Team
+ * @version 1.0
+ */
+public abstract class ActifMobile implements Deplacable, Rechargeable, Communicable,
+        Pilotable, Alertable, Serializable {
+    private static final long serialVersionUID = 1L;
+
+    /** Seuil critique d'autonomie (en pourcentage) */
+    protected static final double SEUIL_AUTONOMIE_CRITIQUE = 20.0;
+
+    /** Identifiant unique de l'actif */
+    private final String id;
+
+    /** Position actuelle en 3D */
+    private Position3D position;
+
+    /** Vitesse maximale en m/s */
+    private final double vitesseMax;
+
+    /** Autonomie maximale en heures */
+    private final double autonomieMax;
+
+    /** Autonomie restante en pourcentage (0.0 à 100.0) */
+    private double autonomieRestante;
+
+    /** État opérationnel actuel */
+    private EtatOperationnel etatOperationnel;
+
+    /** Indique si l'actif est en marche */
+    private boolean enMarche;
+
+    /** Zone d'opération dans laquelle évolue l'actif */
+    protected ZoneOperation zoneOperation;
+
+    /** Vecteur de déplacement résiduel (dérive environnementale) */
+<span class="fc" id="L60">    protected Position3D deriveAccumulee = new Position3D(0, 0, 0);</span>
+
+    /** Liste des alertes reçues */
+    private final List&lt;String&gt; alertesRecues;
+
+    /**
+     * Constructeur protégé pour les sous-classes.
+     * 
+     * @param position     la position initiale
+     * @param vitesseMax   la vitesse maximale en m/s
+     * @param autonomieMax l'autonomie maximale en heures
+     * @throws IllegalArgumentException si les paramètres sont invalides
+     */
+<span class="fc" id="L73">    protected ActifMobile(Position3D position, double vitesseMax, double autonomieMax) {</span>
+<span class="pc bpc" id="L74" title="1 of 2 branches missed.">        if (position == null) {</span>
+<span class="nc" id="L75">            throw new IllegalArgumentException(&quot;La position ne peut pas être nulle&quot;);</span>
+        }
+<span class="pc bpc" id="L77" title="1 of 2 branches missed.">        if (vitesseMax &lt;= 0) {</span>
+<span class="nc" id="L78">            throw new IllegalArgumentException(&quot;La vitesse maximale doit être positive&quot;);</span>
+        }
+<span class="pc bpc" id="L80" title="1 of 2 branches missed.">        if (autonomieMax &lt;= 0) {</span>
+<span class="nc" id="L81">            throw new IllegalArgumentException(&quot;L'autonomie maximale doit être positive&quot;);</span>
+        }
+
+<span class="fc" id="L84">        this.id = UUID.randomUUID().toString();</span>
+<span class="fc" id="L85">        this.position = position;</span>
+<span class="fc" id="L86">        this.vitesseMax = vitesseMax;</span>
+<span class="fc" id="L87">        this.autonomieMax = autonomieMax;</span>
+<span class="fc" id="L88">        this.autonomieRestante = 100.0;</span>
+<span class="fc" id="L89">        this.etatOperationnel = EtatOperationnel.AU_SOL;</span>
+<span class="fc" id="L90">        this.enMarche = false;</span>
+<span class="fc" id="L91">        this.alertesRecues = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L92">    }</span>
+
+    /**
+     * Constructeur avec ID personnalisé pour les tests.
+     * 
+     * @param id           l'identifiant personnalisé
+     * @param position     la position initiale
+     * @param vitesseMax   la vitesse maximale en m/s
+     * @param autonomieMax l'autonomie maximale en heures
+     */
+    protected ActifMobile(String id, Position3D position, double vitesseMax, double autonomieMax) {
+<span class="nc" id="L103">        this(position, vitesseMax, autonomieMax);</span>
+<span class="nc" id="L104">    }</span>
+
+    // Getters et setters avec validation
+
+    public String getId() {
+<span class="fc" id="L109">        return id;</span>
+    }
+
+    @Override
+    public Position3D getPosition() {
+<span class="fc" id="L114">        return position;</span>
+    }
+
+    /**
+     * Modifie la position de l'actif avec validation.
+     * 
+     * @param nouvellePosition la nouvelle position
+     * @throws IllegalArgumentException si la position est nulle
+     */
+    protected void setPosition(Position3D nouvellePosition) {
+<span class="pc bpc" id="L124" title="1 of 2 branches missed.">        if (nouvellePosition == null) {</span>
+<span class="nc" id="L125">            throw new IllegalArgumentException(&quot;La position ne peut pas être nulle&quot;);</span>
+        }
+<span class="fc" id="L127">        this.position = nouvellePosition;</span>
+<span class="fc" id="L128">    }</span>
+
+    public double getVitesseMax() {
+<span class="nc" id="L131">        return vitesseMax;</span>
+    }
+
+    public double getAutonomieMax() {
+<span class="nc" id="L135">        return autonomieMax;</span>
+    }
+
+    @Override
+    public double getAutonomieRestante() {
+<span class="fc" id="L140">        return autonomieRestante;</span>
+    }
+
+    public EtatOperationnel getEtatOperationnel() {
+<span class="fc" id="L144">        return etatOperationnel;</span>
+    }
+
+    /**
+     * Modifie l'état opérationnel de l'actif.
+     * 
+     * @param etat le nouvel état
+     * @throws IllegalArgumentException si l'état est nul
+     */
+    public void setEtatOperationnel(EtatOperationnel etat) {
+<span class="pc bpc" id="L154" title="1 of 2 branches missed.">        if (etat == null) {</span>
+<span class="nc" id="L155">            throw new IllegalArgumentException(&quot;L'état opérationnel ne peut pas être nul&quot;);</span>
+        }
+<span class="fc" id="L157">        this.etatOperationnel = etat;</span>
+<span class="fc" id="L158">    }</span>
+
+    @Override
+    public boolean estEnMarche() {
+<span class="fc" id="L162">        return enMarche;</span>
+    }
+
+    public void setZoneOperation(ZoneOperation zone) {
+<span class="pc bpc" id="L166" title="1 of 2 branches missed.">        if (this.zoneOperation != null) {</span>
+<span class="nc" id="L167">            this.zoneOperation.retirerActif(this);</span>
+        }
+<span class="fc" id="L169">        this.zoneOperation = zone;</span>
+<span class="pc bpc" id="L170" title="1 of 2 branches missed.">        if (this.zoneOperation != null) {</span>
+<span class="fc" id="L171">            this.zoneOperation.enregistrerActif(this);</span>
+        }
+<span class="fc" id="L173">    }</span>
+
+    public ZoneOperation getZoneOperation() {
+<span class="nc" id="L176">        return zoneOperation;</span>
+    }
+
+    // Implémentation de Rechargeable
+
+    @Override
+    public void recharger() {
+<span class="fc" id="L183">        this.autonomieRestante = 100.0;</span>
+<span class="pc bpc" id="L184" title="1 of 2 branches missed.">        if (this.etatOperationnel == EtatOperationnel.AU_SOL) {</span>
+<span class="fc" id="L185">            System.out.println(&quot;Actif &quot; + id + &quot; rechargé à 100%&quot;);</span>
+        }
+<span class="fc" id="L187">    }</span>
+
+    @Override
+    public void ravitailler() {
+<span class="nc" id="L191">        recharger(); // Par défaut, similaire au rechargement</span>
+<span class="nc" id="L192">    }</span>
+
+    @Override
+    public void consommerAutonomie(double montant) {
+<span class="fc" id="L196">        this.autonomieRestante = Math.max(0, this.autonomieRestante - montant);</span>
+<span class="pc bpc" id="L197" title="1 of 2 branches missed.">        if (this.autonomieRestante &lt;= 0) {</span>
+<span class="nc" id="L198">            this.etatOperationnel = EtatOperationnel.EN_PANNE;</span>
+<span class="nc" id="L199">            notifierEtatCritique(&quot;BATTERIE_CRITIQUE&quot;);</span>
+<span class="pc bpc" id="L200" title="1 of 2 branches missed.">        } else if (estEnEtatCritique()) {</span>
+<span class="nc" id="L201">            notifierEtatCritique(&quot;BATTERIE_CRITIQUE&quot;);</span>
+        }
+<span class="fc" id="L203">    }</span>
+
+    // Implémentation de Communicable
+
+    @Override
+    public boolean transmettreAlerte(String message, ActifMobile actifCible) {
+<span class="nc bnc" id="L209" title="All 4 branches missed.">        if (actifCible == null || message == null) {</span>
+<span class="nc" id="L210">            return false;</span>
+        }
+<span class="nc" id="L212">        actifCible.recevoirAlerte(message, this);</span>
+<span class="nc" id="L213">        return true;</span>
+    }
+
+    @Override
+    public void recevoirAlerte(String message, ActifMobile emetteur) {
+<span class="nc" id="L218">        String alerteComplete = &quot;Alerte de &quot; + emetteur.getId() + &quot;: &quot; + message;</span>
+<span class="nc" id="L219">        alertesRecues.add(alerteComplete);</span>
+<span class="nc" id="L220">        System.out.println(&quot;Actif &quot; + id + &quot; a reçu: &quot; + alerteComplete);</span>
+<span class="nc" id="L221">    }</span>
+
+    // Implémentation de Pilotable
+
+    @Override
+    public boolean demarrer() {
+<span class="pc bpc" id="L227" title="1 of 2 branches missed.">        if (etatOperationnel == EtatOperationnel.EN_PANNE) {</span>
+<span class="nc" id="L228">            System.out.println(&quot;Impossible de démarrer: actif en panne&quot;);</span>
+<span class="nc" id="L229">            return false;</span>
+        }
+<span class="pc bpc" id="L231" title="1 of 2 branches missed.">        if (etatOperationnel == EtatOperationnel.EN_MAINTENANCE) {</span>
+<span class="nc" id="L232">            System.out.println(&quot;Impossible de démarrer: actif en maintenance&quot;);</span>
+<span class="nc" id="L233">            return false;</span>
+        }
+
+<span class="fc" id="L236">        enMarche = true;</span>
+<span class="fc bfc" id="L237" title="All 2 branches covered.">        if (etatOperationnel == EtatOperationnel.AU_SOL) {</span>
+<span class="fc" id="L238">            etatOperationnel = EtatOperationnel.EN_MISSION;</span>
+        }
+<span class="fc" id="L240">        return true;</span>
+    }
+
+    @Override
+    public boolean eteindre() {
+<span class="fc" id="L245">        enMarche = false;</span>
+<span class="pc bpc" id="L246" title="1 of 2 branches missed.">        if (etatOperationnel == EtatOperationnel.EN_MISSION) {</span>
+<span class="fc" id="L247">            etatOperationnel = EtatOperationnel.AU_SOL;</span>
+        }
+<span class="fc" id="L249">        return true;</span>
+    }
+
+    // Implémentation de Alertable
+
+    @Override
+    public void notifierEtatCritique(String message) {
+<span class="nc" id="L256">        System.out.println(&quot;ALERTE CRITIQUE [&quot; + message + &quot;] pour actif &quot; + id);</span>
+<span class="nc" id="L257">    }</span>
+
+    @Override
+    public boolean estEnEtatCritique() {
+<span class="pc bpc" id="L261" title="2 of 4 branches missed.">        return autonomieRestante &lt; SEUIL_AUTONOMIE_CRITIQUE ||</span>
+                etatOperationnel == EtatOperationnel.EN_PANNE;
+    }
+
+    // Implémentation de Deplacable (abstraite, à implémenter par les sous-classes)
+
+    @Override
+    public abstract boolean deplacer(Position3D cible);
+
+    @Override
+    public abstract List&lt;Position3D&gt; calculerTrajet(Position3D cible);
+
+    /**
+     * Déplace l'actif vers la cible en fonction du temps écoulé (simulation).
+     * 
+     * @param cible la position cible
+     * @param dt    le temps écoulé en secondes
+     * @return true si la cible est atteinte, false sinon
+     */
+    /**
+     * Déplace l'actif vers la cible en fonction du temps écoulé (simulation).
+     * 
+     * @param cible la position cible
+     * @param dt    le temps écoulé en secondes
+     * @return true si la cible est atteinte, false sinon
+     */
+    public boolean avancerVers(Position3D cible, double dt) {
+<span class="pc bpc" id="L288" title="2 of 4 branches missed.">        if (cible == null || dt &lt;= 0)</span>
+<span class="nc" id="L289">            return false;</span>
+
+        // Si en panne ou batterie vide, on ne bouge plus
+<span class="pc bpc" id="L292" title="2 of 4 branches missed.">        if (etatOperationnel == EtatOperationnel.EN_PANNE || autonomieRestante &lt;= 0) {</span>
+<span class="nc bnc" id="L293" title="All 2 branches missed.">            if (autonomieRestante &lt;= 0)</span>
+<span class="nc" id="L294">                notifierEtatCritique(&quot;BATTERIE_CRITIQUE&quot;);</span>
+<span class="nc" id="L295">            return false;</span>
+        }
+
+        // --- CLAMPING DESTINATION (Refinement) ---
+        // If target is unreachable (inside obstacle), get closest valid point.
+<span class="fc" id="L300">        Position3D destinationEffective = cible;</span>
+<span class="pc bpc" id="L301" title="1 of 2 branches missed.">        if (zoneOperation != null) {</span>
+<span class="fc bfc" id="L302" title="All 2 branches covered.">            if (this instanceof ActifAerien) {</span>
+                // Keep for potential future use or debugging if needed, but remove unused var
+                // for now
+                // double altitude = ((ActifAerien) this).getAltitude();
+            }
+            // Marine uses Z directly which is depth, handled by ZoneOperation logic usually
+            // check against ZMax
+            // For simplicity, passing current Z or explicit param if strictly needed.
+            // ActifMobile does not know it's Aerien/Marin directly without casting, but
+            // getPosition().getZ() is generic.
+
+            // We use current Z for this check.
+<span class="fc" id="L314">            destinationEffective = zoneOperation.getClampedTarget(this, position, cible, position.getZ());</span>
+        }
+
+        // 1. Calculer le vecteur de propulsion vers la destination effective
+<span class="fc" id="L318">        double distanceTotale = position.distanceVers(destinationEffective);</span>
+
+        // If we are effectively AT the clamped destination (close enough), we are done.
+        // This handles the &quot;go to wall and stop&quot; requirement.
+<span class="pc bpc" id="L322" title="1 of 2 branches missed.">        if (distanceTotale &lt; 1.0) { // 1 meter tolerance for exact arrival at clamped point</span>
+<span class="nc" id="L323">            return true;</span>
+        }
+
+        // --- STEERING AVOIDANCE (Soft avoidance) ---
+<span class="fc" id="L327">        double dxP = (destinationEffective.getX() - position.getX()) / distanceTotale;</span>
+<span class="fc" id="L328">        double dyP = (destinationEffective.getY() - position.getY()) / distanceTotale;</span>
+<span class="fc" id="L329">        double dzP = (destinationEffective.getZ() - position.getZ()) / distanceTotale;</span>
+
+<span class="pc bpc" id="L331" title="1 of 2 branches missed.">        if (zoneOperation != null) {</span>
+<span class="fc" id="L332">            List&lt;ActifMobile&gt; voisins = zoneOperation.getVoisins(this, 80.0); // 80m detection range</span>
+<span class="fc bfc" id="L333" title="All 2 branches covered.">            for (ActifMobile v : voisins) {</span>
+<span class="fc" id="L334">                Position3D posV = v.getPosition();</span>
+<span class="fc" id="L335">                double dist = position.distanceVers(posV);</span>
+<span class="pc bpc" id="L336" title="1 of 2 branches missed.">                if (dist &lt; 60.0) { // Proximity threshold</span>
+                    // Calculate lateral vector to push away from neighbor
+<span class="fc" id="L338">                    double lx = position.getX() - posV.getX();</span>
+<span class="fc" id="L339">                    double ly = position.getY() - posV.getY();</span>
+
+                    // If almost perfectly aligned on Y, add a small bias to &quot;choose a side&quot;
+<span class="pc bpc" id="L342" title="1 of 2 branches missed.">                    if (Math.abs(ly) &lt; 1.0) {</span>
+<span class="fc" id="L343">                        ly += 5.0; // Bias to steer &quot;up&quot; (Y+)</span>
+                    }
+
+<span class="fc" id="L346">                    double lNorm = Math.sqrt(lx * lx + ly * ly);</span>
+<span class="pc bpc" id="L347" title="1 of 2 branches missed.">                    if (lNorm &gt; 0) {</span>
+                        // Apply a steering force proportional to inverse distance
+<span class="fc" id="L349">                        double force = (60.0 - dist) / 60.0;</span>
+<span class="fc" id="L350">                        dxP += (lx / lNorm) * force;</span>
+<span class="fc" id="L351">                        dyP += (ly / lNorm) * force;</span>
+                        // Re-normalize propulsion vector
+<span class="fc" id="L353">                        double newNorm = Math.sqrt(dxP * dxP + dyP * dyP + dzP * dzP);</span>
+<span class="fc" id="L354">                        dxP /= newNorm;</span>
+<span class="fc" id="L355">                        dyP /= newNorm;</span>
+<span class="fc" id="L356">                        dzP /= newNorm;</span>
+                    }
+                }
+<span class="fc" id="L359">            }</span>
+        }
+
+<span class="fc" id="L362">        double vitessePropulsion = vitesseMax;</span>
+
+        // Appliquer les limitations de précipitation si applicable (via surcharge
+        // possible ou calcul direct)
+<span class="fc" id="L366">        vitessePropulsion = ajusterVitesseSelonEnvironnement(vitessePropulsion);</span>
+
+<span class="fc" id="L368">        double distanceParcourable = vitessePropulsion * dt;</span>
+
+<span class="fc" id="L370">        double dxEnv = 0;</span>
+<span class="fc" id="L371">        double dyEnv = 0;</span>
+<span class="fc" id="L372">        double dzEnv = 0;</span>
+
+<span class="pc bpc" id="L374" title="1 of 2 branches missed.">        if (zoneOperation != null) {</span>
+<span class="fc bfc" id="L375" title="All 2 branches covered.">            if (this instanceof ActifAerien) {</span>
+<span class="fc" id="L376">                fr.spiga.environment.Vent v = zoneOperation.getVent();</span>
+<span class="pc bpc" id="L377" title="1 of 2 branches missed.">                if (v != null) {</span>
+<span class="fc" id="L378">                    dxEnv = v.getDirection().getX() * (v.getIntensite() / 100.0) * dt;</span>
+<span class="fc" id="L379">                    dyEnv = v.getDirection().getY() * (v.getIntensite() / 100.0) * dt;</span>
+                }
+<span class="pc bpc" id="L381" title="1 of 2 branches missed.">            } else if (this instanceof ActifMarin) {</span>
+<span class="fc" id="L382">                fr.spiga.environment.CourantMarin c = zoneOperation.getCourantMarin();</span>
+<span class="pc bpc" id="L383" title="1 of 2 branches missed.">                if (c != null) {</span>
+<span class="fc" id="L384">                    dxEnv = c.getDirection().getX() * (c.getIntensite() / 100.0) * dt;</span>
+<span class="fc" id="L385">                    dyEnv = c.getDirection().getY() * (c.getIntensite() / 100.0) * dt;</span>
+<span class="fc" id="L386">                    dzEnv = c.getDirection().getZ() * (c.getIntensite() / 100.0) * dt;</span>
+                }
+            }
+        }
+
+        // 3. Consommation (dépend de la distance de propulsion)
+<span class="fc" id="L392">        double consommation = calculerConsommation(Math.min(distanceTotale, distanceParcourable));</span>
+
+<span class="pc bpc" id="L394" title="1 of 2 branches missed.">        if (consommation &gt; autonomieRestante) {</span>
+            // Pas assez d'énergie pour tout le trajet
+<span class="nc" id="L396">            double ratio = autonomieRestante / consommation;</span>
+<span class="nc" id="L397">            distanceParcourable *= ratio;</span>
+<span class="nc" id="L398">            consommerAutonomie(autonomieRestante); // Vider le reste</span>
+
+            // L'actif s'arrête et tombe en panne
+<span class="nc" id="L401">            this.etatOperationnel = EtatOperationnel.EN_PANNE;</span>
+<span class="nc" id="L402">            notifierEtatCritique(&quot;BATTERIE_CRITIQUE&quot;);</span>
+<span class="nc" id="L403">            System.out.println(&quot;Actif &quot; + id + &quot; en panne sèche !&quot;);</span>
+
+            // On fait le petit bond qui restait
+<span class="nc bnc" id="L406" title="All 2 branches missed.">            if (distanceParcourable &gt; 0.1) {</span>
+<span class="nc" id="L407">                deplacerPartiellement(destinationEffective, distanceTotale, distanceParcourable);</span>
+            }
+<span class="nc" id="L409">            return false;</span>
+        } else {
+<span class="fc" id="L411">            consommerAutonomie(consommation);</span>
+        }
+
+        // 4. Calculer la nouvelle position cible (Propulsion + Dérive)
+        double dxPropTotal, dyPropTotal, dzPropTotal;
+
+<span class="fc" id="L417">        double distAEffectuer = Math.min(distanceTotale, distanceParcourable);</span>
+<span class="fc" id="L418">        dxPropTotal = dxP * distAEffectuer;</span>
+<span class="fc" id="L419">        dyPropTotal = dyP * distAEffectuer;</span>
+<span class="fc" id="L420">        dzPropTotal = dzP * distAEffectuer;</span>
+
+        // 5. DÉTECTION ET MOUVEMENT PAR SOUS-ETAPES (SUB-STEPPING)
+<span class="fc" id="L423">        double distStepTotal = Math</span>
+<span class="fc" id="L424">                .sqrt(dxPropTotal * dxPropTotal + dyPropTotal * dyPropTotal + dzPropTotal * dzPropTotal);</span>
+<span class="fc" id="L425">        int nbSubSteps = (int) Math.max(1, Math.ceil(distStepTotal / 10.0));</span>
+
+        // Vecteur par pas
+<span class="fc" id="L428">        double dxStep = (dxPropTotal + dxEnv) / nbSubSteps;</span>
+<span class="fc" id="L429">        double dyStep = (dyPropTotal + dyEnv) / nbSubSteps;</span>
+<span class="fc" id="L430">        double dzStep = (dzPropTotal + dzEnv) / nbSubSteps;</span>
+
+<span class="fc" id="L432">        Position3D currentPos = position;</span>
+
+<span class="fc bfc" id="L434" title="All 2 branches covered.">        for (int i = 0; i &lt; nbSubSteps; i++) {</span>
+<span class="fc" id="L435">            Position3D nextPos = new Position3D(</span>
+<span class="fc" id="L436">                    currentPos.getX() + dxStep,</span>
+<span class="fc" id="L437">                    currentPos.getY() + dyStep,</span>
+<span class="fc" id="L438">                    currentPos.getZ() + dzStep);</span>
+
+<span class="pc bpc" id="L440" title="1 of 2 branches missed.">            if (zoneOperation != null) {</span>
+                // Vérification des collision sur le point suivant
+<span class="fc" id="L442">                boolean collision = false;</span>
+
+                // Obstacles
+<span class="fc bfc" id="L445" title="All 2 branches covered.">                for (fr.spiga.environment.Obstacle obs : zoneOperation.getObstacles()) {</span>
+<span class="pc bpc" id="L446" title="1 of 2 branches missed.">                    if (obs.estEnCollision(nextPos)) {</span>
+                        // LOGIQUE D'ÉVITEMENT
+                        // Even with clamping, we might hit other obstacles along the path.
+                        // Keep avoidance logic.
+
+                        // 1. Flyover check
+<span class="nc bnc" id="L452" title="All 2 branches missed.">                        if (currentPos.getZ() &gt; obs.getZMax() + 10.0) {</span>
+<span class="nc" id="L453">                            continue; // Flyover ok</span>
+                        }
+
+                        // 2. Contournement
+<span class="nc" id="L457">                        double dxObs = nextPos.getX() - obs.getPosition().getX();</span>
+<span class="nc" id="L458">                        double dyObs = nextPos.getY() - obs.getPosition().getY();</span>
+<span class="nc" id="L459">                        double distObs = Math.sqrt(dxObs * dxObs + dyObs * dyObs);</span>
+
+<span class="nc bnc" id="L461" title="All 2 branches missed.">                        if (distObs &gt; 0.1) {</span>
+                            // Vecteur normalisé
+<span class="nc" id="L463">                            double nx = dxObs / distObs;</span>
+<span class="nc" id="L464">                            double ny = dyObs / distObs;</span>
+
+                            // Vecteur tangent pour le glissement (Main droite)
+<span class="nc" id="L467">                            double tx = -ny;</span>
+<span class="nc" id="L468">                            double ty = nx;</span>
+
+                            // On pousse le point à l'extérieur du rayon avec une marge
+<span class="nc" id="L471">                            double penetration = obs.getRayon() - distObs + 5.0; // +5m marge</span>
+
+                            // Ajuster nextPos pour &quot;glisser&quot; sur l'obstacle
+<span class="nc" id="L474">                            double slideFactor = 2.0;</span>
+
+<span class="nc" id="L476">                            nextPos = new Position3D(</span>
+<span class="nc" id="L477">                                    nextPos.getX() + nx * penetration + tx * slideFactor,</span>
+<span class="nc" id="L478">                                    nextPos.getY() + ny * penetration + ty * slideFactor,</span>
+<span class="nc" id="L479">                                    nextPos.getZ());</span>
+<span class="nc" id="L480">                        } else {</span>
+                            // Trop proche du centre ou bug
+<span class="nc" id="L482">                            collision = true;</span>
+                        }
+                    }
+<span class="fc" id="L485">                }</span>
+
+                // Zones d'exclusion (Bloquante)
+<span class="pc bpc" id="L488" title="1 of 2 branches missed.">                if (zoneOperation.estDansZoneExclusion(nextPos)) {</span>
+<span class="nc" id="L489">                    collision = true;</span>
+                }
+
+<span class="pc bpc" id="L492" title="1 of 2 branches missed.">                if (collision) {</span>
+<span class="nc" id="L493">                    this.etatOperationnel = EtatOperationnel.EN_PANNE;</span>
+<span class="nc" id="L494">                    notifierEtatCritique(&quot;PANNE_SYSTEME&quot;);</span>
+<span class="nc" id="L495">                    System.err.println(&quot;CRASH/BLOCAGE ! L'actif &quot; + id + &quot; bloqué à &quot; + nextPos);</span>
+<span class="nc" id="L496">                    return false; // Arrêt immédiat</span>
+                }
+            }
+
+            // Valider le pas
+<span class="fc" id="L501">            currentPos = nextPos;</span>
+        }
+
+        // 6. Mise à jour finale
+        // On vérifie une dernière fois si on est sorti de la map
+<span class="pc bpc" id="L506" title="2 of 4 branches missed.">        if (zoneOperation != null &amp;&amp; !zoneOperation.estDansZone(currentPos)) {</span>
+<span class="nc" id="L507">            return false;</span>
+        }
+
+<span class="fc" id="L510">        setPosition(currentPos);</span>
+<span class="fc bfc" id="L511" title="All 2 branches covered.">        return distanceTotale &lt;= distanceParcourable;</span>
+    }
+
+    /**
+     * Ajuste a velocidade máxima de acordo com fatores ambientais (ex: chuva
+     * forte).
+     */
+    protected double ajusterVitesseSelonEnvironnement(double vMax) {
+<span class="pc bpc" id="L519" title="1 of 2 branches missed.">        if (zoneOperation != null) {</span>
+<span class="fc" id="L520">            fr.spiga.environment.Precipitation p = zoneOperation.getPrecipitationAt(getPosition());</span>
+<span class="fc" id="L521">            double intensity = p.getIntensite();</span>
+<span class="pc bpc" id="L522" title="1 of 2 branches missed.">            if (intensity &gt; 50) {</span>
+<span class="nc" id="L523">                return vMax * (1.0 - (intensity - 50) / 100.0); // Réduction jusqu'à 50%</span>
+            }
+        }
+<span class="fc" id="L526">        return vMax;</span>
+    }
+
+    private void deplacerPartiellement(Position3D cible, double distanceTotale, double distanceParcourable) {
+<span class="nc" id="L530">        double ratio = distanceParcourable / distanceTotale;</span>
+<span class="nc" id="L531">        double dx = (cible.getX() - position.getX()) * ratio;</span>
+<span class="nc" id="L532">        double dy = (cible.getY() - position.getY()) * ratio;</span>
+<span class="nc" id="L533">        double dz = (cible.getZ() - position.getZ()) * ratio;</span>
+
+<span class="nc" id="L535">        setPosition(new Position3D(</span>
+<span class="nc" id="L536">                position.getX() + dx,</span>
+<span class="nc" id="L537">                position.getY() + dy,</span>
+<span class="nc" id="L538">                position.getZ() + dz));</span>
+<span class="nc" id="L539">    }</span>
+
+    /**
+     * Méthode template pour calculer la consommation d'énergie.
+     * Peut être surchargée par les sous-classes pour des calculs spécifiques.
+     * 
+     * @param distance la distance parcourue en mètres
+     * @return la consommation en pourcentage d'autonomie
+     */
+    protected double calculerConsommation(double distance) {
+        // Consommation réduite pour permettre des missions plus longues
+        // Ex: 0.4% par km
+<span class="fc" id="L551">        double consommationBase = (distance / 1000.0) * 0.4;</span>
+<span class="fc" id="L552">        return consommationBase;</span>
+    }
+
+    /**
+     * Obtient le nom du type d'actif.
+     * 
+     * @return le nom du type
+     */
+    public abstract String getType();
+
+    @Override
+    public String toString() {
+<span class="nc" id="L564">        return String.format(&quot;%s[id=%s, position=%s, autonomie=%.1f%%, état=%s]&quot;,</span>
+<span class="nc" id="L565">                getType(), id.substring(0, 8), position, autonomieRestante, etatOperationnel);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

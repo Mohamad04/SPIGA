@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>VehiculeSousMarin.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">SPIGA</a> &gt; <a href="index.source.html" class="el_package">fr.spiga.fleet</a> &gt; <span class="el_source">VehiculeSousMarin.java</span></div><h1>VehiculeSousMarin.java</h1><pre class="source lang-java linenums">package fr.spiga.fleet;
+
+import fr.spiga.core.ActifMarin;
+import fr.spiga.core.Position3D;
+
+/**
+ * Véhicule sous-marin autonome (AUV - Autonomous Underwater Vehicle).
+ * Opère en 3D sous l'eau avec gestion critique de la profondeur.
+ * 
+ * @author SPIGA Team
+ * @version 1.0
+ */
+public class VehiculeSousMarin extends ActifMarin {
+
+    private static final double VITESSE_MAX_DEFAUT = 20.0; // m/s (72 km/h)
+    private static final double AUTONOMIE_MAX_DEFAUT = 10.0; // heures
+    private static final double PROFONDEUR_MAX_DEFAUT = 1000.0; // mètres
+    private static final double SENSIBILITE_COURANT_DEFAUT = 1.0;
+
+    /** Résistance à la pression (facteur de sécurité) */
+    private final double resistancePression;
+
+    /**
+     * Constructeur avec paramètres par défaut.
+     * 
+     * @param position la position initiale (Z négatif pour sous l'eau)
+     */
+    public VehiculeSousMarin(Position3D position) {
+<span class="fc" id="L29">        this(position, VITESSE_MAX_DEFAUT, AUTONOMIE_MAX_DEFAUT);</span>
+<span class="fc" id="L30">    }</span>
+
+    /**
+     * Constructeur avec paramètres personnalisés.
+     * 
+     * @param position     la position initiale (Z négatif pour sous l'eau)
+     * @param vitesseMax   la vitesse maximale en m/s
+     * @param autonomieMax l'autonomie maximale en heures
+     */
+    public VehiculeSousMarin(Position3D position, double vitesseMax, double autonomieMax) {
+<span class="fc" id="L40">        super(position, vitesseMax, autonomieMax, PROFONDEUR_MAX_DEFAUT, SENSIBILITE_COURANT_DEFAUT);</span>
+<span class="fc" id="L41">        this.resistancePression = 1.2;</span>
+<span class="fc" id="L42">    }</span>
+
+    public double getResistancePression() {
+<span class="nc" id="L45">        return resistancePression;</span>
+    }
+
+    /**
+     * Fait surface le véhicule.
+     * 
+     * @return true si la remontée a réussi, false sinon
+     */
+    public boolean faireSurface() {
+<span class="nc" id="L54">        Position3D surface = new Position3D(getPosition().getX(), getPosition().getY(), 0.0);</span>
+<span class="nc" id="L55">        return deplacer(surface);</span>
+    }
+
+    /**
+     * Plonge à une profondeur donnée.
+     * 
+     * @param profondeur la profondeur cible en mètres (valeur positive)
+     * @return true si la plongée a réussi, false sinon
+     */
+    public boolean plonger(double profondeur) {
+<span class="nc bnc" id="L65" title="All 4 branches missed.">        if (profondeur &lt; 0 || profondeur &gt; getProfondeurMax()) {</span>
+<span class="nc" id="L66">            return false;</span>
+        }
+<span class="nc" id="L68">        Position3D cible = new Position3D(getPosition().getX(), getPosition().getY(), -profondeur);</span>
+<span class="nc" id="L69">        return deplacer(cible);</span>
+    }
+
+    @Override
+    public String getType() {
+<span class="nc" id="L74">        return &quot;VehiculeSousMarin&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

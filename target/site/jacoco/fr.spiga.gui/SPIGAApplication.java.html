@@ -1,0 +1,902 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SPIGAApplication.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">SPIGA</a> &gt; <a href="index.source.html" class="el_package">fr.spiga.gui</a> &gt; <span class="el_source">SPIGAApplication.java</span></div><h1>SPIGAApplication.java</h1><pre class="source lang-java linenums">package fr.spiga.gui;
+
+import fr.spiga.core.*;
+import fr.spiga.environment.ZoneOperation;
+import fr.spiga.fleet.*;
+import fr.spiga.mission.*;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.ArrayList;
+import javafx.animation.AnimationTimer;
+import javafx.application.Application;
+import javafx.geometry.Insets;
+import javafx.scene.Scene;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.stage.Stage;
+
+/**
+ * Application JavaFX principale pour SPIGA.
+ * Fournit une interface graphique pour la visualisation et la gestion de la
+ * flotte.
+ * 
+ * @author SPIGA Team
+ * @version 1.0
+ */
+<span class="nc" id="L30">public class SPIGAApplication extends Application {</span>
+
+    private GestionnaireEssaim gestionnaire;
+    private List&lt;Mission&gt; missions;
+    private ZoneOperation zoneOperation;
+    private Canvas canvas;
+    private TextArea logArea;
+    private TextArea statsArea;
+    private Label envStatusLabel;
+    private ListView&lt;String&gt; assetListView;
+
+    private static final double CANVAS_WIDTH = 800;
+    private static final double CANVAS_HEIGHT = 600;
+
+    @Override
+    public void start(Stage primaryStage) {
+<span class="nc" id="L46">        primaryStage.setTitle(&quot;SPIGA - Simulateur de Planification et de Gestion d'Actifs Mobiles&quot;);</span>
+
+<span class="nc" id="L48">        BorderPane root = new BorderPane();</span>
+<span class="nc" id="L49">        root.setPadding(new Insets(10));</span>
+
+        // Centre: Canvas de visualisation
+<span class="nc" id="L52">        VBox centreBox = new VBox(10);</span>
+<span class="nc" id="L53">        Label canvasLabel = new Label(&quot;Visualisation 2D de la Zone d'Opération&quot;);</span>
+<span class="nc" id="L54">        canvasLabel.setStyle(&quot;-fx-font-weight: bold; -fx-font-size: 14px;&quot;);</span>
+<span class="nc" id="L55">        canvas = new Canvas(CANVAS_WIDTH, CANVAS_HEIGHT);</span>
+<span class="nc" id="L56">        canvas.setStyle(&quot;-fx-border-color: black; -fx-border-width: 2px;&quot;);</span>
+<span class="nc" id="L57">        centreBox.getChildren().addAll(canvasLabel, canvas);</span>
+<span class="nc" id="L58">        root.setCenter(centreBox);</span>
+
+        // Bas: Log (créer EN PREMIER pour permettre le logging pendant
+        // l'initialisation)
+<span class="nc" id="L62">        VBox bottomPanel = creerPanneauLog();</span>
+<span class="nc" id="L63">        root.setBottom(bottomPanel);</span>
+
+        // Initialiser le système (maintenant logArea existe)
+<span class="nc" id="L66">        initialiser();</span>
+
+        // Gauche: Contrôles (maintenant gestionnaire existe)
+<span class="nc" id="L69">        VBox leftPanel = creerPanneauControles();</span>
+<span class="nc" id="L70">        root.setLeft(leftPanel);</span>
+
+        // Droite: Liste des actifs et Conditions
+<span class="nc" id="L73">        VBox rightPanel = new VBox(10);</span>
+<span class="nc" id="L74">        rightPanel.getChildren().addAll(creerPanneauEnvironnement(), creerPanneauActifs());</span>
+<span class="nc" id="L75">        root.setRight(rightPanel);</span>
+
+<span class="nc" id="L77">        dessinerVisualization();</span>
+
+<span class="nc" id="L79">        Scene scene = new Scene(root, 1200, 800);</span>
+<span class="nc" id="L80">        primaryStage.setScene(scene);</span>
+        // Démarrer la boucle de simulation (Game Loop)
+<span class="nc" id="L82">        new AnimationTimer() {</span>
+<span class="nc" id="L83">            private long lastTime = 0;</span>
+
+            @Override
+            public void handle(long now) {
+<span class="nc bnc" id="L87" title="All 2 branches missed.">                if (lastTime == 0) {</span>
+<span class="nc" id="L88">                    lastTime = now;</span>
+<span class="nc" id="L89">                    return;</span>
+                }
+
+                // Temps écoulé en secondes (convertir nanosecondes en secondes)
+<span class="nc" id="L93">                double dt = (now - lastTime) / 1_000_000_000.0;</span>
+<span class="nc" id="L94">                lastTime = now;</span>
+
+                // Mettre à jour toutes les missions actives
+                // Accélérer massivement le temps simulé (x200) pour une réactivité optimale
+<span class="nc" id="L98">                double simulationDt = dt * 200.0;</span>
+
+                // Mettre à jour l'affichage de l'environnement
+<span class="nc" id="L101">                mettreAJourAffichageEnvironnement();</span>
+
+<span class="nc bnc" id="L103" title="All 2 branches missed.">                for (Mission mission : missions) {</span>
+<span class="nc bnc" id="L104" title="All 2 branches missed.">                    if (&quot;EN_COURS&quot;.equals(mission.getStatut())) {</span>
+<span class="nc" id="L105">                        mission.mettreAJour(simulationDt);</span>
+                    }
+<span class="nc" id="L107">                }</span>
+
+                // Vérifier les collisions entre actifs
+<span class="nc" id="L110">                List&lt;String&gt; collisions = gestionnaire.verifierToutesLesCollisions();</span>
+<span class="nc bnc" id="L111" title="All 2 branches missed.">                for (String c : collisions) {</span>
+<span class="nc bnc" id="L112" title="All 2 branches missed.">                    if (c.contains(&quot;!!!&quot;)) {</span>
+<span class="nc" id="L113">                        ajouterLog(c);</span>
+                    }
+<span class="nc" id="L115">                }</span>
+
+                // Rafraîchir l'affichage à chaque frame
+<span class="nc" id="L118">                mettreAJourAffichage();</span>
+<span class="nc" id="L119">            }</span>
+<span class="nc" id="L120">        }.start();</span>
+
+<span class="nc" id="L122">        primaryStage.show();</span>
+<span class="nc" id="L123">    }</span>
+
+    /**
+     * Initialise le système.
+     */
+    private void initialiser() {
+<span class="nc" id="L129">        gestionnaire = new GestionnaireEssaim();</span>
+<span class="nc" id="L130">        missions = new ArrayList&lt;&gt;();</span>
+
+        // Créer la zone d'opération
+<span class="nc" id="L133">        Position3D min = new Position3D(0, 0, -2000);</span>
+<span class="nc" id="L134">        Position3D max = new Position3D(100000, 100000, 10000);</span>
+<span class="nc" id="L135">        zoneOperation = new ZoneOperation(min, max);</span>
+
+        // Ajouter quelques conditions environnementales par défaut
+<span class="nc" id="L138">        zoneOperation.setVent(new fr.spiga.environment.Vent(Math.PI / 4, 30.0));</span>
+<span class="nc" id="L139">        zoneOperation.setCourantMarin(</span>
+                new fr.spiga.environment.CourantMarin(new Position3D(1, -0.5, 0), 20.0));
+<span class="nc" id="L141">        zoneOperation.setPrecipitation(new fr.spiga.environment.Precipitation(</span>
+                fr.spiga.environment.Precipitation.TypePrecipitation.PLUIE_MODEREE, 60.0));
+
+        // --- AJOUT D'OBSTACLES POUR LES COLLISIONS ---
+<span class="nc" id="L145">        creerObstaclesDemo();</span>
+
+        // Créer quelques actifs de démonstration
+<span class="nc" id="L148">        creerActifsDemo();</span>
+<span class="nc" id="L149">    }</span>
+
+    /**
+     * Crée des obstacles de démonstration.
+     */
+    private void creerObstaclesDemo() {
+        // Île centrale (Maintenant plus grande et franchissable par les airs)
+        // Rayon 5000m, Hauteur max 200m (Les drones volent à 300m+)
+<span class="nc" id="L157">        zoneOperation.ajouterObstacle(new fr.spiga.environment.Obstacle(</span>
+                new Position3D(50000, 50000, 0), 5000, -2000, 200, &quot;Ile Centrale&quot;));
+
+        // Récif dangereux (Uniquement sous-marin/surface)
+<span class="nc" id="L161">        zoneOperation.ajouterObstacle(new fr.spiga.environment.Obstacle(</span>
+                new Position3D(20000, 80000, -50), 2000, -200, 0, &quot;Récif Nord&quot;));
+
+        // Montagne (Obstacle total, très haut)
+<span class="nc" id="L165">        zoneOperation.ajouterObstacle(new fr.spiga.environment.Obstacle(</span>
+                new Position3D(80000, 20000, 0), 3000, -2000, 2000, &quot;Montagne Est&quot;));
+
+        // Une zone d'exclusion (Port)
+<span class="nc" id="L169">        zoneOperation.ajouterZoneExclusion(new fr.spiga.environment.ZoneExclusion(</span>
+                new Position3D(10000, 10000, 0), 2500, &quot;Port de Base&quot;));
+<span class="nc" id="L171">    }</span>
+
+    /**
+     * Crée des actifs de démonstration.
+     */
+
+    private void mettreAJourAffichageEnvironnement() {
+<span class="nc bnc" id="L178" title="All 4 branches missed.">        if (envStatusLabel == null || zoneOperation == null)</span>
+<span class="nc" id="L179">            return;</span>
+
+<span class="nc" id="L181">        fr.spiga.environment.Vent v = zoneOperation.getVent();</span>
+<span class="nc" id="L182">        fr.spiga.environment.Precipitation p = zoneOperation.getPrecipitation();</span>
+<span class="nc" id="L183">        fr.spiga.environment.CourantMarin c = zoneOperation.getCourantMarin();</span>
+
+<span class="nc" id="L185">        StringBuilder sb = new StringBuilder();</span>
+<span class="nc" id="L186">        sb.append(String.format(&quot;💨 VENT: %.1f%% (Dir: %.0f°)\n&quot;,</span>
+<span class="nc" id="L187">                v.getIntensite(), Math.toDegrees(Math.atan2(v.getDirection().getY(), v.getDirection().getX()))));</span>
+
+<span class="nc bnc" id="L189" title="All 2 branches missed.">        String pIcon = p.getType() == fr.spiga.environment.Precipitation.TypePrecipitation.AUCUNE ? &quot;Soleil&quot; : &quot;Pluie&quot;;</span>
+<span class="nc" id="L190">        sb.append(String.format(&quot;%s PREC: %s (%.1f%%)\n&quot;,</span>
+<span class="nc" id="L191">                pIcon, p.getType().name(), p.getIntensite()));</span>
+
+<span class="nc" id="L193">        sb.append(String.format(&quot;🌊 COUR: %.1f%% (X:%.1f Y:%.1f)&quot;,</span>
+<span class="nc" id="L194">                c.getIntensite(), c.getDirection().getX(), c.getDirection().getY()));</span>
+
+<span class="nc" id="L196">        envStatusLabel.setText(sb.toString());</span>
+<span class="nc" id="L197">    }</span>
+
+    /**
+     * Crée o painel de condições ambientais.
+     */
+    private VBox creerPanneauEnvironnement() {
+<span class="nc" id="L203">        VBox panel = new VBox(5);</span>
+<span class="nc" id="L204">        panel.setPadding(new Insets(10));</span>
+<span class="nc" id="L205">        panel.setStyle(&quot;-fx-border-color: lightblue; -fx-border-width: 2px; -fx-background-color: #f0f8ff;&quot;);</span>
+        // panel.setPrefWidth(300); // Déjà géré par le parent
+
+<span class="nc" id="L208">        Label title = new Label(&quot;Conditions Environnementales&quot;);</span>
+<span class="nc" id="L209">        title.setStyle(&quot;-fx-font-weight: bold; -fx-text-fill: #2c3e50;&quot;);</span>
+
+<span class="nc" id="L211">        envStatusLabel = new Label(&quot;Initialisation...&quot;);</span>
+<span class="nc" id="L212">        envStatusLabel.setWrapText(true);</span>
+<span class="nc" id="L213">        envStatusLabel.setStyle(&quot;-fx-font-family: 'Courier New'; -fx-font-size: 11px;&quot;);</span>
+
+<span class="nc" id="L215">        panel.getChildren().addAll(title, envStatusLabel);</span>
+<span class="nc" id="L216">        return panel;</span>
+    }
+
+    private void creerActifsDemo() {
+<span class="nc" id="L220">        DroneReconnaissance drone1 = new DroneReconnaissance(trouverPositionValide(500));</span>
+<span class="nc" id="L221">        DroneLogistique drone2 = new DroneLogistique(trouverPositionValide(300));</span>
+<span class="nc" id="L222">        VehiculeSurface usv = new VehiculeSurface(trouverPositionValide(0));</span>
+<span class="nc" id="L223">        VehiculeSousMarin auv = new VehiculeSousMarin(trouverPositionValide(-100));</span>
+
+<span class="nc" id="L225">        drone1.setZoneOperation(zoneOperation);</span>
+<span class="nc" id="L226">        drone2.setZoneOperation(zoneOperation);</span>
+<span class="nc" id="L227">        usv.setZoneOperation(zoneOperation);</span>
+<span class="nc" id="L228">        auv.setZoneOperation(zoneOperation);</span>
+
+<span class="nc" id="L230">        gestionnaire.enregistrerActif(drone1);</span>
+<span class="nc" id="L231">        gestionnaire.enregistrerActif(drone2);</span>
+<span class="nc" id="L232">        gestionnaire.enregistrerActif(usv);</span>
+<span class="nc" id="L233">        gestionnaire.enregistrerActif(auv);</span>
+
+<span class="nc" id="L235">        ajouterLog(&quot;4 actifs de démonstration créés (positions validées)&quot;);</span>
+<span class="nc" id="L236">    }</span>
+
+    /**
+     * Crée le panneau de contrôles.
+     */
+    private VBox creerPanneauControles() {
+<span class="nc" id="L242">        VBox panel = new VBox(10);</span>
+<span class="nc" id="L243">        panel.setPadding(new Insets(10));</span>
+<span class="nc" id="L244">        panel.setStyle(&quot;-fx-border-color: gray; -fx-border-width: 1px;&quot;);</span>
+<span class="nc" id="L245">        panel.setPrefWidth(250);</span>
+
+<span class="nc" id="L247">        Label title = new Label(&quot;Contrôles&quot;);</span>
+<span class="nc" id="L248">        title.setStyle(&quot;-fx-font-weight: bold; -fx-font-size: 14px;&quot;);</span>
+
+<span class="nc" id="L250">        Button btnCreerDroneReco = new Button(&quot;Créer Drone Reco&quot;);</span>
+<span class="nc" id="L251">        btnCreerDroneReco.setMaxWidth(Double.MAX_VALUE);</span>
+<span class="nc" id="L252">        btnCreerDroneReco.setOnAction(e -&gt; creerActif(&quot;DroneReconnaissance&quot;));</span>
+
+<span class="nc" id="L254">        Button btnCreerDroneLog = new Button(&quot;Créer Drone Logistique&quot;);</span>
+<span class="nc" id="L255">        btnCreerDroneLog.setMaxWidth(Double.MAX_VALUE);</span>
+<span class="nc" id="L256">        btnCreerDroneLog.setOnAction(e -&gt; creerActif(&quot;DroneLogistique&quot;));</span>
+
+<span class="nc" id="L258">        Button btnCreerUSV = new Button(&quot;Créer Véhicule Surface&quot;);</span>
+<span class="nc" id="L259">        btnCreerUSV.setMaxWidth(Double.MAX_VALUE);</span>
+<span class="nc" id="L260">        btnCreerUSV.setOnAction(e -&gt; creerActif(&quot;VehiculeSurface&quot;));</span>
+
+<span class="nc" id="L262">        Button btnCreerAUV = new Button(&quot;Créer Sous-Marin&quot;);</span>
+<span class="nc" id="L263">        btnCreerAUV.setMaxWidth(Double.MAX_VALUE);</span>
+<span class="nc" id="L264">        btnCreerAUV.setOnAction(e -&gt; creerActif(&quot;VehiculeSousMarin&quot;));</span>
+
+<span class="nc" id="L266">        Button btnCreerMission = new Button(&quot;Nouvelle Mission (Config)&quot;);</span>
+<span class="nc" id="L267">        btnCreerMission.setMaxWidth(Double.MAX_VALUE);</span>
+<span class="nc" id="L268">        btnCreerMission.setStyle(&quot;-fx-font-weight: bold;&quot;);</span>
+<span class="nc" id="L269">        btnCreerMission.setOnAction(e -&gt; gererCreationMissionAvancee());</span>
+
+<span class="nc" id="L271">        Button btnHistorique = new Button(&quot;Voir Historique&quot;);</span>
+<span class="nc" id="L272">        btnHistorique.setMaxWidth(Double.MAX_VALUE);</span>
+<span class="nc" id="L273">        btnHistorique.setOnAction(e -&gt; voirHistorique());</span>
+
+<span class="nc" id="L275">        Button btnRecharger = new Button(&quot;Recharger Actifs&quot;);</span>
+<span class="nc" id="L276">        btnRecharger.setMaxWidth(Double.MAX_VALUE);</span>
+<span class="nc" id="L277">        btnRecharger.setOnAction(e -&gt; {</span>
+<span class="nc" id="L278">            gestionnaire.rechargerTousLesActifsAuSol();</span>
+<span class="nc" id="L279">            ajouterLog(&quot;Actifs rechargés&quot;);</span>
+<span class="nc" id="L280">            mettreAJourAffichage();</span>
+<span class="nc" id="L281">        });</span>
+
+<span class="nc" id="L283">        Button btnResetMissions = new Button(&quot;Arrêter Toutes Missions&quot;);</span>
+<span class="nc" id="L284">        btnResetMissions.setMaxWidth(Double.MAX_VALUE);</span>
+<span class="nc" id="L285">        btnResetMissions.setStyle(&quot;-fx-text-fill: white; -fx-background-color: darkred;&quot;);</span>
+<span class="nc" id="L286">        btnResetMissions.setOnAction(e -&gt; {</span>
+<span class="nc bnc" id="L287" title="All 2 branches missed.">            for (Mission m : missions) {</span>
+<span class="nc bnc" id="L288" title="All 2 branches missed.">                if (&quot;EN_COURS&quot;.equals(m.getStatut()))</span>
+<span class="nc" id="L289">                    m.annuler(&quot;Réinitialisation forcée&quot;);</span>
+<span class="nc" id="L290">            }</span>
+<span class="nc" id="L291">            ajouterLog(&quot;Toutes les missions ont été arrêtées.&quot;);</span>
+<span class="nc" id="L292">            mettreAJourAffichage();</span>
+<span class="nc" id="L293">        });</span>
+
+<span class="nc" id="L295">        Separator sep = new Separator();</span>
+
+<span class="nc" id="L297">        Label statsLabel = new Label(&quot;Statistiques&quot;);</span>
+<span class="nc" id="L298">        statsLabel.setStyle(&quot;-fx-font-weight: bold;&quot;);</span>
+
+<span class="nc" id="L300">        statsArea = new TextArea();</span>
+<span class="nc" id="L301">        statsArea.setEditable(false);</span>
+<span class="nc" id="L302">        statsArea.setPrefHeight(150);</span>
+<span class="nc" id="L303">        statsArea.setText(gestionnaire.genererRapportFlotte());</span>
+
+<span class="nc" id="L305">        panel.getChildren().addAll(</span>
+                title,
+                btnCreerDroneReco,
+                btnCreerDroneLog,
+                btnCreerUSV,
+                btnCreerAUV,
+                btnCreerMission,
+                btnHistorique,
+                btnRecharger,
+                btnResetMissions,
+                sep,
+                statsLabel,
+                statsArea);
+
+<span class="nc" id="L319">        return panel;</span>
+    }
+
+    /**
+     * Crée le panneau des actifs.
+     */
+    private VBox creerPanneauActifs() {
+<span class="nc" id="L326">        VBox panel = new VBox(10);</span>
+<span class="nc" id="L327">        panel.setPadding(new Insets(10));</span>
+<span class="nc" id="L328">        panel.setStyle(&quot;-fx-border-color: gray; -fx-border-width: 1px;&quot;);</span>
+<span class="nc" id="L329">        panel.setPrefWidth(300);</span>
+
+<span class="nc" id="L331">        Label title = new Label(&quot;Liste des Actifs&quot;);</span>
+<span class="nc" id="L332">        title.setStyle(&quot;-fx-font-weight: bold; -fx-font-size: 14px;&quot;);</span>
+
+<span class="nc" id="L334">        assetListView = new ListView&lt;&gt;();</span>
+<span class="nc" id="L335">        assetListView.setPrefHeight(500);</span>
+<span class="nc" id="L336">        mettreAJourListeActifs();</span>
+
+<span class="nc" id="L338">        panel.getChildren().addAll(title, assetListView);</span>
+
+<span class="nc" id="L340">        return panel;</span>
+    }
+
+    /**
+     * Crée le panneau de log.
+     */
+    private VBox creerPanneauLog() {
+<span class="nc" id="L347">        VBox panel = new VBox(5);</span>
+<span class="nc" id="L348">        panel.setPadding(new Insets(10));</span>
+
+<span class="nc" id="L350">        Label title = new Label(&quot;Journal d'Activité&quot;);</span>
+<span class="nc" id="L351">        title.setStyle(&quot;-fx-font-weight: bold;&quot;);</span>
+
+<span class="nc" id="L353">        logArea = new TextArea();</span>
+<span class="nc" id="L354">        logArea.setEditable(false);</span>
+<span class="nc" id="L355">        logArea.setPrefHeight(100);</span>
+
+<span class="nc" id="L357">        panel.getChildren().addAll(title, logArea);</span>
+
+<span class="nc" id="L359">        return panel;</span>
+    }
+
+    /**
+     * Dessine la visualisation 2D.
+     */
+    private void dessinerVisualization() {
+<span class="nc" id="L366">        GraphicsContext gc = canvas.getGraphicsContext2D();</span>
+
+        // Fond
+<span class="nc" id="L369">        gc.setFill(Color.LIGHTBLUE);</span>
+<span class="nc" id="L370">        gc.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);</span>
+
+        // Grille
+<span class="nc" id="L373">        gc.setStroke(Color.LIGHTGRAY);</span>
+<span class="nc" id="L374">        gc.setLineWidth(0.5);</span>
+<span class="nc bnc" id="L375" title="All 2 branches missed.">        for (int i = 0; i &lt; CANVAS_WIDTH; i += 50) {</span>
+<span class="nc" id="L376">            gc.strokeLine(i, 0, i, CANVAS_HEIGHT);</span>
+        }
+<span class="nc bnc" id="L378" title="All 2 branches missed.">        for (int i = 0; i &lt; CANVAS_HEIGHT; i += 50) {</span>
+<span class="nc" id="L379">            gc.strokeLine(0, i, CANVAS_WIDTH, i);</span>
+        }
+
+        // --- EFFETS ENVIRONNEMENTAUX ---
+<span class="nc bnc" id="L383" title="All 2 branches missed.">        if (zoneOperation != null) {</span>
+<span class="nc" id="L384">            dessinerVent(gc);</span>
+<span class="nc" id="L385">            dessinerCourants(gc);</span>
+<span class="nc" id="L386">            dessinerPluie(gc);</span>
+<span class="nc" id="L387">            dessinerObstacles(gc);</span>
+        }
+
+        // Dessiner les actifs
+<span class="nc bnc" id="L391" title="All 2 branches missed.">        for (var actif : gestionnaire.getTousLesActifs()) {</span>
+<span class="nc" id="L392">            dessinerActif(gc, actif);</span>
+<span class="nc" id="L393">        }</span>
+
+        // Légende
+<span class="nc" id="L396">        dessinerLegende(gc);</span>
+<span class="nc" id="L397">    }</span>
+
+    private void dessinerPluie(GraphicsContext gc) {
+<span class="nc" id="L400">        fr.spiga.environment.Precipitation p = zoneOperation.getPrecipitation();</span>
+<span class="nc bnc" id="L401" title="All 4 branches missed.">        if (p == null || p.getType() == fr.spiga.environment.Precipitation.TypePrecipitation.AUCUNE)</span>
+<span class="nc" id="L402">            return;</span>
+
+<span class="nc" id="L404">        Position3D min = zoneOperation.getRainZoneMin();</span>
+<span class="nc" id="L405">        Position3D max = zoneOperation.getRainZoneMax();</span>
+
+<span class="nc" id="L407">        double x1 = (min.getX() / 100000.0) * CANVAS_WIDTH;</span>
+<span class="nc" id="L408">        double y1 = (min.getY() / 100000.0) * CANVAS_HEIGHT;</span>
+<span class="nc" id="L409">        double x2 = (max.getX() / 100000.0) * CANVAS_WIDTH;</span>
+<span class="nc" id="L410">        double y2 = (max.getY() / 100000.0) * CANVAS_HEIGHT;</span>
+
+<span class="nc" id="L412">        gc.setStroke(Color.rgb(100, 100, 255, 0.4));</span>
+<span class="nc" id="L413">        gc.setLineWidth(1.0);</span>
+
+        // Dessiner quelques gouttes aléatoires dans la zone
+<span class="nc bnc" id="L416" title="All 2 branches missed.">        for (int i = 0; i &lt; p.getIntensite() * 2; i++) {</span>
+<span class="nc" id="L417">            double rx = x1 + Math.random() * (x2 - x1);</span>
+<span class="nc" id="L418">            double ry = y1 + Math.random() * (y2 - y1);</span>
+<span class="nc" id="L419">            gc.strokeLine(rx, ry, rx - 2, ry + 5);</span>
+        }
+
+        // Contour de la zone de pluie
+<span class="nc" id="L423">        gc.setStroke(Color.rgb(150, 150, 150, 0.2));</span>
+<span class="nc" id="L424">        gc.strokeRect(x1, y1, x2 - x1, y2 - y1);</span>
+<span class="nc" id="L425">    }</span>
+
+    private void dessinerVent(GraphicsContext gc) {
+<span class="nc" id="L428">        fr.spiga.environment.Vent v = zoneOperation.getVent();</span>
+<span class="nc bnc" id="L429" title="All 4 branches missed.">        if (v == null || v.getIntensite() &lt; 5)</span>
+<span class="nc" id="L430">            return;</span>
+
+<span class="nc" id="L432">        gc.setStroke(Color.rgb(200, 200, 200, 0.3));</span>
+<span class="nc" id="L433">        gc.setLineWidth(0.8);</span>
+
+<span class="nc" id="L435">        double angle = Math.atan2(v.getDirection().getY(), v.getDirection().getX());</span>
+<span class="nc" id="L436">        double dx = Math.cos(angle) * 20;</span>
+<span class="nc" id="L437">        double dy = Math.sin(angle) * 20;</span>
+
+        // Dessiner quelques flèches de vent éparpillées
+<span class="nc bnc" id="L440" title="All 2 branches missed.">        for (int i = 100; i &lt; CANVAS_WIDTH; i += 200) {</span>
+<span class="nc bnc" id="L441" title="All 2 branches missed.">            for (int j = 100; j &lt; CANVAS_HEIGHT; j += 200) {</span>
+<span class="nc" id="L442">                gc.strokeLine(i, j, i + dx, j + dy);</span>
+            }
+        }
+<span class="nc" id="L445">    }</span>
+
+    private void dessinerCourants(GraphicsContext gc) {
+<span class="nc" id="L448">        fr.spiga.environment.CourantMarin c = zoneOperation.getCourantMarin();</span>
+<span class="nc bnc" id="L449" title="All 4 branches missed.">        if (c == null || c.getIntensite() &lt; 5)</span>
+<span class="nc" id="L450">            return;</span>
+
+<span class="nc" id="L452">        gc.setStroke(Color.rgb(0, 100, 255, 0.2));</span>
+<span class="nc" id="L453">        gc.setLineWidth(1.5);</span>
+
+<span class="nc" id="L455">        double dx = c.getDirection().getX() * 15;</span>
+<span class="nc" id="L456">        double dy = c.getDirection().getY() * 15;</span>
+
+        // Ondulations avec direction
+<span class="nc bnc" id="L459" title="All 2 branches missed.">        for (int i = 50; i &lt; CANVAS_WIDTH; i += 150) {</span>
+<span class="nc bnc" id="L460" title="All 2 branches missed.">            for (int j = 50; j &lt; CANVAS_HEIGHT; j += 150) {</span>
+<span class="nc" id="L461">                gc.strokeArc(i, j, 30, 10, 0, 180, javafx.scene.shape.ArcType.OPEN);</span>
+<span class="nc" id="L462">                gc.strokeLine(i + 15, j + 5, i + 15 + dx, j + 5 + dy);</span>
+            }
+        }
+<span class="nc" id="L465">    }</span>
+
+    private void dessinerObstacles(GraphicsContext gc) {
+        // Dessiner les obstacles fixes
+<span class="nc bnc" id="L469" title="All 2 branches missed.">        for (fr.spiga.environment.Obstacle o : zoneOperation.getObstacles()) {</span>
+<span class="nc" id="L470">            double cx = (o.getPosition().getX() / 100000.0) * CANVAS_WIDTH;</span>
+<span class="nc" id="L471">            double cy = (o.getPosition().getY() / 100000.0) * CANVAS_HEIGHT;</span>
+<span class="nc" id="L472">            double cr = (o.getRayon() / 100000.0) * CANVAS_WIDTH;</span>
+
+<span class="nc" id="L474">            gc.setFill(Color.BROWN);</span>
+<span class="nc" id="L475">            gc.fillOval(cx - cr, cy - cr, cr * 2, cr * 2);</span>
+<span class="nc" id="L476">            gc.setStroke(Color.DARKRED);</span>
+<span class="nc" id="L477">            gc.strokeOval(cx - cr, cy - cr, cr * 2, cr * 2);</span>
+<span class="nc" id="L478">            gc.setFill(Color.BLACK);</span>
+<span class="nc" id="L479">            gc.fillText(o.getType(), cx - 20, cy);</span>
+<span class="nc" id="L480">        }</span>
+
+        // Dessiner les zones d'exclusion
+<span class="nc bnc" id="L483" title="All 2 branches missed.">        for (fr.spiga.environment.ZoneExclusion z : zoneOperation.getZonesExclusion()) {</span>
+<span class="nc" id="L484">            double cx = (z.getCentre().getX() / 100000.0) * CANVAS_WIDTH;</span>
+<span class="nc" id="L485">            double cy = (z.getCentre().getY() / 100000.0) * CANVAS_HEIGHT;</span>
+<span class="nc" id="L486">            double cr = (z.getRayon() / 100000.0) * CANVAS_WIDTH;</span>
+
+<span class="nc" id="L488">            gc.setStroke(Color.RED);</span>
+<span class="nc" id="L489">            gc.setLineWidth(2.0);</span>
+<span class="nc" id="L490">            gc.setLineDashes(10.0);</span>
+<span class="nc" id="L491">            gc.strokeOval(cx - cr, cy - cr, cr * 2, cr * 2);</span>
+<span class="nc" id="L492">            gc.setLineDashes(0);</span>
+<span class="nc" id="L493">            gc.setFill(Color.rgb(255, 0, 0, 0.1));</span>
+<span class="nc" id="L494">            gc.fillOval(cx - cr, cy - cr, cr * 2, cr * 2);</span>
+<span class="nc" id="L495">            gc.setFill(Color.RED);</span>
+<span class="nc" id="L496">            gc.fillText(&quot;INTERDIT: &quot; + z.getNom(), cx - 30, cy);</span>
+<span class="nc" id="L497">        }</span>
+<span class="nc" id="L498">        gc.setLineWidth(1.0);</span>
+<span class="nc" id="L499">    }</span>
+
+    /**
+     * Dessine un actif sur le canvas.
+     */
+    private void dessinerActif(GraphicsContext gc, fr.spiga.core.ActifMobile actif) {
+<span class="nc" id="L505">        Position3D pos = actif.getPosition();</span>
+
+        // Convertir les coordonnées (échelle)
+<span class="nc" id="L508">        double x = (pos.getX() / 100000.0) * CANVAS_WIDTH;</span>
+<span class="nc" id="L509">        double y = (pos.getY() / 100000.0) * CANVAS_HEIGHT;</span>
+
+        // Couleur selon le type et l'état
+<span class="nc" id="L512">        Color couleur = obtenirCouleurActif(actif);</span>
+<span class="nc" id="L513">        gc.setFill(couleur);</span>
+
+        // Calculer l'échelle selon l'altitude/profondeur
+<span class="nc" id="L516">        double scale = 1.0;</span>
+<span class="nc bnc" id="L517" title="All 2 branches missed.">        if (actif instanceof fr.spiga.core.ActifAerien) {</span>
+<span class="nc" id="L518">            double altitude = ((fr.spiga.core.ActifAerien) actif).getAltitude();</span>
+<span class="nc" id="L519">            double altMax = ((fr.spiga.core.ActifAerien) actif).getAltitudeMax();</span>
+            // Plus haut = plus grand (jusqu'à +50%)
+<span class="nc bnc" id="L521" title="All 2 branches missed.">            if (altMax &gt; 0)</span>
+<span class="nc" id="L522">                scale = 1.0 + (altitude / altMax) * 0.5;</span>
+<span class="nc bnc" id="L523" title="All 2 branches missed.">        } else if (actif instanceof fr.spiga.core.ActifMarin) {</span>
+<span class="nc" id="L524">            double profondeur = ((fr.spiga.core.ActifMarin) actif).getProfondeur();</span>
+<span class="nc" id="L525">            double profMax = ((fr.spiga.core.ActifMarin) actif).getProfondeurMax();</span>
+            // Plus profond = plus petit (jusqu'à -50% pour meilleure visibilité)
+<span class="nc bnc" id="L527" title="All 2 branches missed.">            if (profMax &gt; 0)</span>
+<span class="nc" id="L528">                scale = 1.0 - (profondeur / profMax) * 0.5;</span>
+        }
+
+<span class="nc" id="L531">        double size = 16 * scale;</span>
+<span class="nc" id="L532">        double half = size / 2.0;</span>
+
+        // Forme selon le type
+<span class="nc bnc" id="L535" title="All 2 branches missed.">        if (actif instanceof fr.spiga.fleet.DroneReconnaissance) {</span>
+            // Triangle
+<span class="nc" id="L537">            double[] xPoints = { x, x - half, x + half };</span>
+<span class="nc" id="L538">            double[] yPoints = { y - ((size * 0.6) + 2), y + ((size * 0.3) + 2), y + ((size * 0.3) + 2) };</span>
+<span class="nc" id="L539">            gc.fillPolygon(xPoints, yPoints, 3);</span>
+
+            // Icone R
+<span class="nc" id="L542">            gc.setFill(Color.WHITE);</span>
+<span class="nc" id="L543">            gc.fillText(&quot;R&quot;, x - 3, y + 3);</span>
+<span class="nc bnc" id="L544" title="All 2 branches missed.">        } else if (actif instanceof fr.spiga.fleet.DroneLogistique) {</span>
+            // Carré
+<span class="nc" id="L546">            gc.fillRect(x - half, y - half, size, size);</span>
+
+            // Icone L
+<span class="nc" id="L549">            gc.setFill(Color.WHITE);</span>
+<span class="nc" id="L550">            gc.fillText(&quot;L&quot;, x - 3, y + 3);</span>
+<span class="nc bnc" id="L551" title="All 2 branches missed.">        } else if (actif instanceof fr.spiga.fleet.VehiculeSurface) {</span>
+            // Cercle
+<span class="nc" id="L553">            gc.fillOval(x - half, y - half, size, size);</span>
+<span class="nc bnc" id="L554" title="All 2 branches missed.">        } else if (actif instanceof fr.spiga.fleet.VehiculeSousMarin) {</span>
+            // Losange
+<span class="nc" id="L556">            double[] xPoints = { x, x - half, x, x + half };</span>
+<span class="nc" id="L557">            double[] yPoints = { y - half, y, y + half, y };</span>
+<span class="nc" id="L558">            gc.fillPolygon(xPoints, yPoints, 4);</span>
+<span class="nc" id="L559">        } else {</span>
+            // Défaut
+<span class="nc" id="L561">            gc.fillOval(x - (half / 2), y - (half / 2), half, half);</span>
+        }
+
+        // Indicateur d'autonomie
+<span class="nc" id="L565">        double autonomie = actif.getAutonomieRestante();</span>
+<span class="nc" id="L566">        double yBar = y + half + 2;</span>
+
+<span class="nc bnc" id="L568" title="All 4 branches missed.">        gc.setFill(autonomie &gt; 50 ? Color.GREEN : autonomie &gt; 20 ? Color.ORANGE : Color.RED);</span>
+<span class="nc" id="L569">        gc.fillRect(x - half, yBar, size * (autonomie / 100.0), 3);</span>
+<span class="nc" id="L570">        gc.setStroke(Color.BLACK);</span>
+<span class="nc" id="L571">        gc.strokeRect(x - half, yBar, size, 3);</span>
+<span class="nc" id="L572">    }</span>
+
+    /**
+     * Obtient la couleur d'un actif selon son type et état.
+     */
+    private Color obtenirCouleurActif(fr.spiga.core.ActifMobile actif) {
+<span class="nc bnc" id="L578" title="All 4 branches missed.">        switch (actif.getEtatOperationnel()) {</span>
+            case EN_MISSION -&gt; {
+<span class="nc" id="L580">                return Color.BLUE;</span>
+            }
+            case EN_PANNE -&gt; {
+<span class="nc" id="L583">                return Color.RED;</span>
+            }
+            case EN_MAINTENANCE -&gt; {
+<span class="nc" id="L586">                return Color.ORANGE;</span>
+            }
+            default -&gt; {
+<span class="nc" id="L589">                return Color.GREEN;</span>
+            }
+        }
+    }
+
+    /**
+     * Dessine la légende.
+     */
+    private void dessinerLegende(GraphicsContext gc) {
+        // Dessiner la légende en bas à droite
+<span class="nc" id="L599">        double rectX = CANVAS_WIDTH - 200;</span>
+<span class="nc" id="L600">        double rectY = CANVAS_HEIGHT - 120;</span>
+<span class="nc" id="L601">        gc.setFill(Color.rgb(255, 255, 255, 0.8)); // Fond semi-transparent</span>
+<span class="nc" id="L602">        gc.fillRect(rectX, rectY, 190, 110);</span>
+<span class="nc" id="L603">        gc.setStroke(Color.BLACK);</span>
+<span class="nc" id="L604">        gc.strokeRect(rectX, rectY, 190, 110);</span>
+
+<span class="nc" id="L606">        gc.setFill(Color.BLACK);</span>
+<span class="nc" id="L607">        gc.fillText(&quot;Légende:&quot;, rectX + 10, rectY + 20);</span>
+
+<span class="nc" id="L609">        gc.setFill(Color.GREEN);</span>
+<span class="nc" id="L610">        gc.fillRect(rectX + 10, rectY + 30, 10, 10);</span>
+<span class="nc" id="L611">        gc.setFill(Color.BLACK);</span>
+<span class="nc" id="L612">        gc.fillText(&quot;AU_SOL&quot;, rectX + 25, rectY + 40);</span>
+
+<span class="nc" id="L614">        gc.setFill(Color.BLUE);</span>
+<span class="nc" id="L615">        gc.fillRect(rectX + 10, rectY + 45, 10, 10);</span>
+<span class="nc" id="L616">        gc.setFill(Color.BLACK);</span>
+<span class="nc" id="L617">        gc.fillText(&quot;EN_MISSION&quot;, rectX + 25, rectY + 55);</span>
+
+<span class="nc" id="L619">        gc.setFill(Color.RED);</span>
+<span class="nc" id="L620">        gc.fillRect(rectX + 10, rectY + 60, 10, 10);</span>
+<span class="nc" id="L621">        gc.setFill(Color.BLACK);</span>
+<span class="nc" id="L622">        gc.fillText(&quot;EN_PANNE&quot;, rectX + 25, rectY + 70);</span>
+<span class="nc" id="L623">        gc.fillText(&quot;(R)eco  (S)urf  (I)nsp  (+)Sauv&quot;, rectX + 10, rectY + 95);</span>
+<span class="nc" id="L624">    }</span>
+
+    /**
+     * Crée un nouvel actif.
+     */
+    private void creerActif(String type) {
+<span class="nc bnc" id="L630" title="All 4 branches missed.">        double z = type.contains(&quot;Drone&quot;) ? 500 : (type.contains(&quot;SousMarin&quot;) ? -50 : 0);</span>
+<span class="nc" id="L631">        Position3D pos = trouverPositionValide(z);</span>
+
+<span class="nc bnc" id="L633" title="All 5 branches missed.">        fr.spiga.core.ActifMobile actif = switch (type) {</span>
+<span class="nc" id="L634">            case &quot;DroneReconnaissance&quot; -&gt; new DroneReconnaissance(pos);</span>
+<span class="nc" id="L635">            case &quot;DroneLogistique&quot; -&gt; new fr.spiga.fleet.DroneLogistique(pos);</span>
+<span class="nc" id="L636">            case &quot;VehiculeSurface&quot; -&gt; new VehiculeSurface(pos);</span>
+<span class="nc" id="L637">            case &quot;VehiculeSousMarin&quot; -&gt; new fr.spiga.fleet.VehiculeSousMarin(pos);</span>
+<span class="nc" id="L638">            default -&gt; null;</span>
+        };
+
+<span class="nc bnc" id="L641" title="All 2 branches missed.">        if (actif != null) {</span>
+<span class="nc" id="L642">            actif.setZoneOperation(zoneOperation);</span>
+<span class="nc" id="L643">            gestionnaire.enregistrerActif(actif);</span>
+<span class="nc" id="L644">            ajouterLog(&quot;Actif créé: &quot; + actif.getType() + &quot; em &quot; + pos);</span>
+<span class="nc" id="L645">            mettreAJourAffichage();</span>
+        }
+<span class="nc" id="L647">    }</span>
+
+    private Position3D trouverPositionValide(double z) {
+<span class="nc" id="L650">        int tentatives = 0;</span>
+<span class="nc bnc" id="L651" title="All 2 branches missed.">        while (tentatives &lt; 100) {</span>
+<span class="nc" id="L652">            double x = 5000 + Math.random() * 90000;</span>
+<span class="nc" id="L653">            double y = 5000 + Math.random() * 90000;</span>
+<span class="nc" id="L654">            Position3D pos = new Position3D(x, y, z);</span>
+
+<span class="nc bnc" id="L656" title="All 2 branches missed.">            if (zoneOperation == null)</span>
+<span class="nc" id="L657">                return pos;</span>
+
+<span class="nc bnc" id="L659" title="All 2 branches missed.">            if (!zoneOperation.estEnCollisionAvecObstacle(pos) &amp;&amp;</span>
+<span class="nc bnc" id="L660" title="All 2 branches missed.">                    !zoneOperation.estDansZoneExclusion(pos)) {</span>
+<span class="nc" id="L661">                return pos;</span>
+            }
+<span class="nc" id="L663">            tentatives++;</span>
+<span class="nc" id="L664">        }</span>
+<span class="nc" id="L665">        return new Position3D(5000, 5000, z); // Par défaut si coincé</span>
+    }
+
+    // Méthode simulerPanneAleatoire supprimée
+
+    /**
+     * Gère la création avancée de mission avec sélection manuelle.
+     */
+    private void gererCreationMissionAvancee() {
+        // 1. Choisir le type
+<span class="nc" id="L675">        List&lt;String&gt; types = List.of(&quot;Recherche et Sauvetage&quot;, &quot;Surveillance Maritime&quot;,</span>
+                &quot;Inspection Sous-Marine&quot;,
+                &quot;Reconnaissance Aérienne&quot;);
+<span class="nc" id="L678">        ChoiceDialog&lt;String&gt; dialogType = new ChoiceDialog&lt;&gt;(types.get(0),</span>
+                types);
+<span class="nc" id="L680">        dialogType.setTitle(&quot;Nouvelle Mission&quot;);</span>
+<span class="nc" id="L681">        dialogType.setHeaderText(&quot;Étape 1/3 : Type de Mission&quot;);</span>
+<span class="nc" id="L682">        dialogType.setContentText(&quot;Sélectionnez le type :&quot;);</span>
+
+<span class="nc" id="L684">        Optional&lt;String&gt; typeOpt = dialogType.showAndWait();</span>
+<span class="nc bnc" id="L685" title="All 2 branches missed.">        if (typeOpt.isEmpty())</span>
+<span class="nc" id="L686">            return;</span>
+<span class="nc" id="L687">        String typeChoisi = typeOpt.get();</span>
+
+        // 2. Configurer les paramètres spécifiques
+<span class="nc" id="L690">        fr.spiga.mission.Mission mission = null;</span>
+<span class="nc" id="L691">        LocalDateTime now = LocalDateTime.now();</span>
+
+        // Demander la durée
+<span class="nc" id="L694">        List&lt;Integer&gt; durees = List.of(1, 2, 4, 8);</span>
+<span class="nc" id="L695">        ChoiceDialog&lt;Integer&gt; dialogDuree = new ChoiceDialog&lt;&gt;(2, durees);</span>
+<span class="nc" id="L696">        dialogDuree.setTitle(&quot;Durée&quot;);</span>
+<span class="nc" id="L697">        dialogDuree.setHeaderText(&quot;Combien d'heures doit durer la mission ?&quot;);</span>
+<span class="nc" id="L698">        Optional&lt;Integer&gt; dureeOpt = dialogDuree.showAndWait();</span>
+<span class="nc bnc" id="L699" title="All 2 branches missed.">        if (dureeOpt.isEmpty())</span>
+<span class="nc" id="L700">            return;</span>
+
+<span class="nc" id="L702">        LocalDateTime fin = now.plusHours(dureeOpt.get());</span>
+
+<span class="nc bnc" id="L704" title="All 2 branches missed.">        if (typeChoisi.equals(&quot;Recherche et Sauvetage&quot;)) {</span>
+            // Logique Sauvetage (Inchangée pour la sélection cible)
+<span class="nc" id="L706">            List&lt;fr.spiga.core.ActifMobile&gt; ciblesPotentielles = gestionnaire.getTousLesActifs().stream()</span>
+<span class="nc bnc" id="L707" title="All 2 branches missed.">                    .filter(a -&gt; a.getEtatOperationnel() == fr.spiga.core.EtatOperationnel.EN_PANNE</span>
+<span class="nc bnc" id="L708" title="All 2 branches missed.">                            || a.getAutonomieRestante() &lt; 90.0)</span>
+<span class="nc" id="L709">                    .collect(java.util.stream.Collectors.toList());</span>
+
+<span class="nc bnc" id="L711" title="All 2 branches missed.">            if (ciblesPotentielles.isEmpty()) {</span>
+<span class="nc" id="L712">                Alert alert = new Alert(Alert.AlertType.WARNING);</span>
+<span class="nc" id="L713">                alert.setTitle(&quot;Impossible&quot;);</span>
+<span class="nc" id="L714">                alert.setHeaderText(&quot;Aucune cible valide&quot;);</span>
+<span class="nc" id="L715">                alert.setContentText(&quot;Aucun véhicule n'est en panne ou en besoin de ravitaillement (&lt;90%).&quot;);</span>
+<span class="nc" id="L716">                alert.showAndWait();</span>
+<span class="nc" id="L717">                return;</span>
+            }
+
+<span class="nc" id="L720">            ChoiceDialog&lt;fr.spiga.core.ActifMobile&gt; dialogCible = new ChoiceDialog&lt;&gt;(ciblesPotentielles.get(0),</span>
+                    ciblesPotentielles);
+<span class="nc" id="L722">            dialogCible.setTitle(&quot;Configuration Sauvetage&quot;);</span>
+<span class="nc" id="L723">            dialogCible.setHeaderText(&quot;Étape 2/3 : Cible à secourir&quot;);</span>
+<span class="nc" id="L724">            dialogCible.setContentText(&quot;Choisissez le véhicule en détresse :&quot;);</span>
+
+<span class="nc" id="L726">            Optional&lt;fr.spiga.core.ActifMobile&gt; cibleOpt = dialogCible.showAndWait();</span>
+<span class="nc bnc" id="L727" title="All 2 branches missed.">            if (cibleOpt.isEmpty())</span>
+<span class="nc" id="L728">                return;</span>
+
+<span class="nc" id="L730">            mission = new fr.spiga.mission.MissionRechercheEtSauvetage(now, fin, cibleOpt.get());</span>
+<span class="nc" id="L731">        } else {</span>
+            // Pour les autres missions : Point-to-Point avec Coordonnées
+
+            // Dialog custom pour X, Y (et Z si inspection)
+<span class="nc" id="L735">            Dialog&lt;Position3D&gt; dialogCoords = new Dialog&lt;&gt;();</span>
+<span class="nc" id="L736">            dialogCoords.setTitle(&quot;Coordonnées de destination&quot;);</span>
+<span class="nc" id="L737">            dialogCoords.setHeaderText(</span>
+<span class="nc bnc" id="L738" title="All 2 branches missed.">                    &quot;Entrez le point objectif (X, Y&quot; + (typeChoisi.equals(&quot;Inspection Sous-Marine&quot;) ? &quot;, Z)&quot; : &quot;)&quot;));</span>
+<span class="nc" id="L739">            dialogCoords.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);</span>
+
+<span class="nc" id="L741">            GridPane grid = new GridPane();</span>
+<span class="nc" id="L742">            grid.setHgap(10);</span>
+<span class="nc" id="L743">            grid.setVgap(10);</span>
+
+<span class="nc" id="L745">            TextField xField = new TextField(&quot;50000&quot;);</span>
+<span class="nc" id="L746">            TextField yField = new TextField(&quot;50000&quot;);</span>
+<span class="nc bnc" id="L747" title="All 2 branches missed.">            TextField zField = new TextField(typeChoisi.equals(&quot;Reconnaissance Aérienne&quot;) ? &quot;2000&quot;</span>
+<span class="nc bnc" id="L748" title="All 2 branches missed.">                    : (typeChoisi.equals(&quot;Inspection Sous-Marine&quot;) ? &quot;-100&quot; : &quot;0&quot;));</span>
+
+<span class="nc" id="L750">            grid.add(new Label(&quot;X:&quot;), 0, 0);</span>
+<span class="nc" id="L751">            grid.add(xField, 1, 0);</span>
+<span class="nc" id="L752">            grid.add(new Label(&quot;Y:&quot;), 0, 1);</span>
+<span class="nc" id="L753">            grid.add(yField, 1, 1);</span>
+
+            // Only show Z for missions that care, or default 0/safe
+<span class="nc bnc" id="L756" title="All 2 branches missed.">            if (typeChoisi.equals(&quot;Inspection Sous-Marine&quot;)) {</span>
+<span class="nc" id="L757">                grid.add(new Label(&quot;Z (Profondeur &lt; 0):&quot;), 0, 2);</span>
+<span class="nc" id="L758">                grid.add(zField, 1, 2);</span>
+            }
+
+<span class="nc" id="L761">            dialogCoords.getDialogPane().setContent(grid);</span>
+<span class="nc" id="L762">            dialogCoords.setResultConverter(dialogButton -&gt; {</span>
+<span class="nc bnc" id="L763" title="All 2 branches missed.">                if (dialogButton == ButtonType.OK) {</span>
+                    try {
+<span class="nc" id="L765">                        double x = Double.parseDouble(xField.getText());</span>
+<span class="nc" id="L766">                        double y = Double.parseDouble(yField.getText());</span>
+<span class="nc" id="L767">                        double z = Double.parseDouble(zField.getText());</span>
+<span class="nc" id="L768">                        return new Position3D(x, y, z);</span>
+<span class="nc" id="L769">                    } catch (NumberFormatException e) {</span>
+<span class="nc" id="L770">                        return null;</span>
+                    }
+                }
+<span class="nc" id="L773">                return null;</span>
+            });
+
+<span class="nc" id="L776">            Optional&lt;Position3D&gt; posOpt = dialogCoords.showAndWait();</span>
+<span class="nc bnc" id="L777" title="All 2 branches missed.">            if (posOpt.isEmpty())</span>
+<span class="nc" id="L778">                return;</span>
+<span class="nc" id="L779">            Position3D dest = posOpt.get();</span>
+
+<span class="nc bnc" id="L781" title="All 2 branches missed.">            if (typeChoisi.equals(&quot;Surveillance Maritime&quot;)) {</span>
+<span class="nc" id="L782">                mission = new fr.spiga.mission.MissionSurveillanceMaritime(now, fin, dest);</span>
+<span class="nc bnc" id="L783" title="All 2 branches missed.">            } else if (typeChoisi.equals(&quot;Reconnaissance Aérienne&quot;)) {</span>
+<span class="nc" id="L784">                mission = new fr.spiga.mission.MissionReconnaissanceAerienne(now, fin, dest);</span>
+            } else { // Inspection Sous-Marine
+<span class="nc" id="L786">                mission = new fr.spiga.mission.MissionInspectionSousMarine(now, fin, dest);</span>
+            }
+        }
+
+        // 3. Sélectionner les véhicules exécutants (1 à 5)
+<span class="nc" id="L791">        final fr.spiga.mission.Mission missionFinale = mission;</span>
+<span class="nc" id="L792">        List&lt;fr.spiga.core.ActifMobile&gt; candidats = gestionnaire.getActifsDisponibles().stream()</span>
+<span class="nc" id="L793">                .filter(missionFinale::estCompatible)</span>
+<span class="nc" id="L794">                .collect(java.util.stream.Collectors.toList());</span>
+
+<span class="nc bnc" id="L796" title="All 2 branches missed.">        if (candidats.isEmpty()) {</span>
+<span class="nc" id="L797">            Alert alert = new Alert(Alert.AlertType.ERROR);</span>
+<span class="nc" id="L798">            alert.setTitle(&quot;Erreur&quot;);</span>
+<span class="nc" id="L799">            alert.setHeaderText(&quot;Aucun véhicule compatible disponible&quot;);</span>
+<span class="nc" id="L800">            alert.setContentText(&quot;Il n'y a aucun véhicule disponible capable de réaliser cette mission.&quot;);</span>
+<span class="nc" id="L801">            alert.showAndWait();</span>
+<span class="nc" id="L802">            return;</span>
+        }
+
+        // Custom Dialog for Multi-Selection
+<span class="nc" id="L806">        Dialog&lt;List&lt;fr.spiga.core.ActifMobile&gt;&gt; dialogSelect = new Dialog&lt;&gt;();</span>
+<span class="nc" id="L807">        dialogSelect.setTitle(&quot;Affectation&quot;);</span>
+<span class="nc" id="L808">        dialogSelect.setHeaderText(&quot;Étape 3/3 : Sélectionner 1 à 5 véhicules&quot;);</span>
+<span class="nc" id="L809">        dialogSelect.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);</span>
+
+<span class="nc" id="L811">        ListView&lt;fr.spiga.core.ActifMobile&gt; listView = new ListView&lt;&gt;();</span>
+<span class="nc" id="L812">        listView.getItems().addAll(candidats);</span>
+<span class="nc" id="L813">        listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);</span>
+<span class="nc" id="L814">        dialogSelect.getDialogPane().setContent(listView);</span>
+
+<span class="nc" id="L816">        dialogSelect.setResultConverter(dialogButton -&gt; {</span>
+<span class="nc bnc" id="L817" title="All 2 branches missed.">            if (dialogButton == ButtonType.OK) {</span>
+<span class="nc" id="L818">                return new ArrayList&lt;&gt;(listView.getSelectionModel().getSelectedItems());</span>
+            }
+<span class="nc" id="L820">            return null;</span>
+        });
+
+<span class="nc" id="L823">        Optional&lt;List&lt;fr.spiga.core.ActifMobile&gt;&gt; selectionOpt = dialogSelect.showAndWait();</span>
+<span class="nc bnc" id="L824" title="All 4 branches missed.">        if (selectionOpt.isPresent() &amp;&amp; !selectionOpt.get().isEmpty()) {</span>
+<span class="nc" id="L825">            List&lt;fr.spiga.core.ActifMobile&gt; selected = selectionOpt.get();</span>
+<span class="nc bnc" id="L826" title="All 2 branches missed.">            if (selected.size() &gt; 5) {</span>
+<span class="nc" id="L827">                Alert alert = new Alert(Alert.AlertType.WARNING);</span>
+<span class="nc" id="L828">                alert.setTitle(&quot;Attention&quot;);</span>
+<span class="nc" id="L829">                alert.setContentText(&quot;Maximum 5 véhicules. Seuls les 5 premiers seront utilisés.&quot;);</span>
+<span class="nc" id="L830">                alert.showAndWait();</span>
+<span class="nc" id="L831">                selected = selected.subList(0, 5);</span>
+            }
+
+<span class="nc bnc" id="L834" title="All 2 branches missed.">            for (fr.spiga.core.ActifMobile executant : selected) {</span>
+<span class="nc" id="L835">                mission.assignerActif(executant);</span>
+<span class="nc" id="L836">            }</span>
+
+<span class="nc" id="L838">            mission.demarrer();</span>
+<span class="nc" id="L839">            missions.add(mission);</span>
+<span class="nc" id="L840">            ajouterLog(&quot;Mission lancée : &quot; + mission.getNom() + &quot; avec &quot; + selected.size() + &quot; actifs.&quot;);</span>
+<span class="nc" id="L841">            mettreAJourAffichage();</span>
+        }
+<span class="nc" id="L843">    }</span>
+
+    /**
+     * Affiche l'historique des missions.
+     */
+    private void voirHistorique() {
+<span class="nc" id="L849">        Alert alert = new Alert(Alert.AlertType.INFORMATION);</span>
+<span class="nc" id="L850">        alert.setTitle(&quot;Historique des Missions&quot;);</span>
+<span class="nc" id="L851">        alert.setHeaderText(&quot;Rapport complet&quot;);</span>
+
+<span class="nc" id="L853">        StringBuilder sb = new StringBuilder(&quot;--- HISTORIQUE DES MISSIONS ---\n\n&quot;);</span>
+<span class="nc bnc" id="L854" title="All 2 branches missed.">        for (Mission m : missions) {</span>
+<span class="nc" id="L855">            sb.append(m.toString()).append(&quot;\n&quot;);</span>
+<span class="nc" id="L856">        }</span>
+
+<span class="nc" id="L858">        TextArea area = new TextArea(sb.toString());</span>
+<span class="nc" id="L859">        area.setEditable(false);</span>
+<span class="nc" id="L860">        area.setWrapText(true);</span>
+<span class="nc" id="L861">        alert.getDialogPane().setContent(area);</span>
+<span class="nc" id="L862">        alert.showAndWait();</span>
+<span class="nc" id="L863">    }</span>
+
+    /**
+     * Crée une mission (Obsolète, utiliser gererCreationMission).
+     */
+    // Méthode supprimée car inutilisée et redondante
+
+    /**
+     * Met à jour l'affichage.
+     */
+    private void mettreAJourAffichage() {
+<span class="nc" id="L874">        dessinerVisualization();</span>
+<span class="nc" id="L875">        mettreAJourListeActifs();</span>
+<span class="nc bnc" id="L876" title="All 2 branches missed.">        if (statsArea != null) {</span>
+<span class="nc" id="L877">            statsArea.setText(gestionnaire.genererRapportFlotte());</span>
+        }
+<span class="nc" id="L879">    }</span>
+
+    /**
+     * Met à jour la liste des actifs.
+     */
+    private void mettreAJourListeActifs() {
+<span class="nc" id="L885">        assetListView.getItems().clear();</span>
+<span class="nc bnc" id="L886" title="All 2 branches missed.">        for (var actif : gestionnaire.getTousLesActifs()) {</span>
+<span class="nc" id="L887">            assetListView.getItems().add(actif.toString());</span>
+<span class="nc" id="L888">        }</span>
+<span class="nc" id="L889">    }</span>
+
+    /**
+     * Ajoute un message au log.
+     */
+    private void ajouterLog(String message) {
+<span class="nc" id="L895">        logArea.appendText(&quot;[&quot; + java.time.LocalTime.now().toString().substring(0, 8) + &quot;] &quot; + message + &quot;\n&quot;);</span>
+<span class="nc" id="L896">    }</span>
+
+    public static void main(String[] args) {
+<span class="nc" id="L899">        launch(args);</span>
+<span class="nc" id="L900">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

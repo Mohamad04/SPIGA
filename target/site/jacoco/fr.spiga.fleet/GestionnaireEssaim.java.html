@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GestionnaireEssaim.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">SPIGA</a> &gt; <a href="index.source.html" class="el_package">fr.spiga.fleet</a> &gt; <span class="el_source">GestionnaireEssaim.java</span></div><h1>GestionnaireEssaim.java</h1><pre class="source lang-java linenums">package fr.spiga.fleet;
+
+import fr.spiga.core.ActifMobile;
+import fr.spiga.core.EtatOperationnel;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * Gestionnaire central de la flotte d'actifs mobiles et des essaims.
+ * Responsable de la création, gestion et optimisation des essaims.
+ * 
+ * &lt;p&gt;
+ * Implémente le principe SRP (Single Responsibility) en se concentrant
+ * uniquement sur la gestion de flotte.
+ * 
+ * @author SPIGA Team
+ * @version 1.0
+ */
+public class GestionnaireEssaim implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    /** Liste de tous les actifs gérés */
+    private final List&lt;ActifMobile&gt; tousLesActifs;
+
+    /** Liste des essaims créés */
+    private final List&lt;Essaim&gt; essaims;
+
+    /**
+     * Constructeur du gestionnaire d'essaim.
+     */
+<span class="nc" id="L34">    public GestionnaireEssaim() {</span>
+<span class="nc" id="L35">        this.tousLesActifs = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L36">        this.essaims = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L37">    }</span>
+
+    /**
+     * Enregistre un nouvel actif dans la flotte.
+     * 
+     * @param actif l'actif à enregistrer
+     * @return true si enregistrement réussi, false sinon
+     */
+    public boolean enregistrerActif(ActifMobile actif) {
+<span class="nc bnc" id="L46" title="All 4 branches missed.">        if (actif == null || tousLesActifs.contains(actif)) {</span>
+<span class="nc" id="L47">            return false;</span>
+        }
+<span class="nc" id="L49">        return tousLesActifs.add(actif);</span>
+    }
+
+    /**
+     * Crée un nouvel essaim.
+     * 
+     * @param nom le nom de l'essaim
+     * @return l'essaim créé
+     */
+    public Essaim creerEssaim(String nom) {
+<span class="nc" id="L59">        Essaim essaim = new Essaim(nom);</span>
+<span class="nc" id="L60">        essaims.add(essaim);</span>
+<span class="nc" id="L61">        return essaim;</span>
+    }
+
+    /**
+     * Obtient tous les actifs disponibles (non en mission, non en panne).
+     * 
+     * @return la liste des actifs disponibles
+     */
+    public List&lt;ActifMobile&gt; getActifsDisponibles() {
+<span class="nc" id="L70">        return tousLesActifs.stream()</span>
+<span class="nc bnc" id="L71" title="All 2 branches missed.">                .filter(actif -&gt; actif.getEtatOperationnel() == EtatOperationnel.AU_SOL)</span>
+<span class="nc" id="L72">                .collect(Collectors.toList());</span>
+    }
+
+    /**
+     * Obtient tous les actifs en mission.
+     * 
+     * @return la liste des actifs en mission
+     */
+    public List&lt;ActifMobile&gt; getActifsEnMission() {
+<span class="nc" id="L81">        return tousLesActifs.stream()</span>
+<span class="nc bnc" id="L82" title="All 2 branches missed.">                .filter(actif -&gt; actif.getEtatOperationnel() == EtatOperationnel.EN_MISSION)</span>
+<span class="nc" id="L83">                .collect(Collectors.toList());</span>
+    }
+
+    /**
+     * Obtient tous les actifs en panne ou maintenance.
+     * 
+     * @return la liste des actifs nécessitant attention
+     */
+    public List&lt;ActifMobile&gt; getActifsNecessitantMaintenance() {
+<span class="nc" id="L92">        return tousLesActifs.stream()</span>
+<span class="nc bnc" id="L93" title="All 2 branches missed.">                .filter(actif -&gt; actif.getEtatOperationnel() == EtatOperationnel.EN_PANNE ||</span>
+<span class="nc bnc" id="L94" title="All 2 branches missed.">                        actif.getEtatOperationnel() == EtatOperationnel.EN_MAINTENANCE)</span>
+<span class="nc" id="L95">                .collect(Collectors.toList());</span>
+    }
+
+    /**
+     * Sélectionne l'actif optimal selon l'autonomie restante.
+     * 
+     * @return l'actif avec la meilleure autonomie, ou null si aucun disponible
+     */
+    public ActifMobile selectionnerActifOptimalParAutonomie() {
+<span class="nc" id="L104">        return getActifsDisponibles().stream()</span>
+<span class="nc" id="L105">                .max(Comparator.comparingDouble(ActifMobile::getAutonomieRestante))</span>
+<span class="nc" id="L106">                .orElse(null);</span>
+    }
+
+    /**
+     * Sélectionne l'actif optimal d'un type donné selon l'autonomie.
+     * 
+     * @param typeClass la classe du type d'actif recherché
+     * @return l'actif optimal du type spécifié, ou null si aucun disponible
+     */
+    public ActifMobile selectionnerActifOptimalParType(Class&lt;? extends ActifMobile&gt; typeClass) {
+<span class="nc" id="L116">        return getActifsDisponibles().stream()</span>
+<span class="nc" id="L117">                .filter(typeClass::isInstance)</span>
+<span class="nc" id="L118">                .max(Comparator.comparingDouble(ActifMobile::getAutonomieRestante))</span>
+<span class="nc" id="L119">                .orElse(null);</span>
+    }
+
+    /**
+     * Vérifie les collisions dans tous les essaims.
+     * 
+     * @return la liste de toutes les alertes de collision
+     */
+    public List&lt;String&gt; verifierToutesLesCollisions() {
+<span class="nc" id="L128">        List&lt;String&gt; toutesLesAlertes = new ArrayList&lt;&gt;();</span>
+
+<span class="nc bnc" id="L130" title="All 2 branches missed.">        for (Essaim essaim : essaims) {</span>
+<span class="nc" id="L131">            List&lt;String&gt; alertes = essaim.verifierCollisions();</span>
+<span class="nc bnc" id="L132" title="All 2 branches missed.">            if (!alertes.isEmpty()) {</span>
+<span class="nc" id="L133">                toutesLesAlertes.add(&quot;Essaim: &quot; + essaim.getNom());</span>
+<span class="nc" id="L134">                toutesLesAlertes.addAll(alertes);</span>
+            }
+<span class="nc" id="L136">        }</span>
+
+<span class="nc" id="L138">        return toutesLesAlertes;</span>
+    }
+
+    /**
+     * Recharge tous les actifs au sol.
+     */
+    public void rechargerTousLesActifsAuSol() {
+<span class="nc" id="L145">        tousLesActifs.stream()</span>
+<span class="nc bnc" id="L146" title="All 2 branches missed.">                .filter(actif -&gt; actif.getEtatOperationnel() == EtatOperationnel.AU_SOL)</span>
+<span class="nc" id="L147">                .forEach(ActifMobile::recharger);</span>
+<span class="nc" id="L148">    }</span>
+
+    /**
+     * Obtient des statistiques sur la flotte.
+     * 
+     * @return un rapport textuel des statistiques
+     */
+    public String genererRapportFlotte() {
+<span class="nc" id="L156">        long disponibles = tousLesActifs.stream()</span>
+<span class="nc bnc" id="L157" title="All 2 branches missed.">                .filter(a -&gt; a.getEtatOperationnel() == EtatOperationnel.AU_SOL)</span>
+<span class="nc" id="L158">                .count();</span>
+<span class="nc" id="L159">        long enMission = tousLesActifs.stream()</span>
+<span class="nc bnc" id="L160" title="All 2 branches missed.">                .filter(a -&gt; a.getEtatOperationnel() == EtatOperationnel.EN_MISSION)</span>
+<span class="nc" id="L161">                .count();</span>
+<span class="nc" id="L162">        long enPanne = tousLesActifs.stream()</span>
+<span class="nc bnc" id="L163" title="All 2 branches missed.">                .filter(a -&gt; a.getEtatOperationnel() == EtatOperationnel.EN_PANNE)</span>
+<span class="nc" id="L164">                .count();</span>
+<span class="nc" id="L165">        long enMaintenance = tousLesActifs.stream()</span>
+<span class="nc bnc" id="L166" title="All 2 branches missed.">                .filter(a -&gt; a.getEtatOperationnel() == EtatOperationnel.EN_MAINTENANCE)</span>
+<span class="nc" id="L167">                .count();</span>
+
+<span class="nc" id="L169">        return String.format(</span>
+                &quot;=== Rapport de Flotte ===%n&quot; +
+                        &quot;Total actifs: %d%n&quot; +
+                        &quot;Disponibles: %d%n&quot; +
+                        &quot;En mission: %d%n&quot; +
+                        &quot;En panne: %d%n&quot; +
+                        &quot;En maintenance: %d%n&quot; +
+                        &quot;Essaims actifs: %d&quot;,
+<span class="nc" id="L177">                tousLesActifs.size(), disponibles, enMission, enPanne, enMaintenance, essaims.size());</span>
+    }
+
+    public List&lt;ActifMobile&gt; getTousLesActifs() {
+<span class="nc" id="L181">        return new ArrayList&lt;&gt;(tousLesActifs);</span>
+    }
+
+    public List&lt;Essaim&gt; getEssaims() {
+<span class="nc" id="L185">        return new ArrayList&lt;&gt;(essaims);</span>
+    }
+
+    /**
+     * Suggère ou crée un essaim optimal pour un &quot;type&quot; de mission simplifié.
+     * 
+     * @param type le type de mission (ex: &quot;LOGISTIQUE&quot;, &quot;SURVEILLANCE&quot;)
+     * @return un essaim optimisé pour la mission, ou null si ressources
+     *         insuffisantes
+     */
+    public Essaim suggererEssaim(String type) {
+<span class="nc" id="L196">        List&lt;ActifMobile&gt; disponibles = getActifsDisponibles();</span>
+<span class="nc bnc" id="L197" title="All 2 branches missed.">        if (disponibles.isEmpty())</span>
+<span class="nc" id="L198">            return null;</span>
+
+<span class="nc" id="L200">        Essaim essaimSuggere = new Essaim(&quot;Essaim-&quot; + type);</span>
+
+<span class="nc bnc" id="L202" title="All 2 branches missed.">        if (&quot;LOGISTIQUE&quot;.equalsIgnoreCase(type)) {</span>
+<span class="nc" id="L203">            disponibles.stream()</span>
+<span class="nc" id="L204">                    .filter(a -&gt; a instanceof fr.spiga.fleet.DroneLogistique)</span>
+<span class="nc" id="L205">                    .sorted(Comparator.comparingDouble(ActifMobile::getAutonomieRestante).reversed())</span>
+<span class="nc" id="L206">                    .limit(1)</span>
+<span class="nc" id="L207">                    .forEach(essaimSuggere::ajouterActif);</span>
+<span class="nc bnc" id="L208" title="All 2 branches missed.">        } else if (&quot;SURVEILLANCE&quot;.equalsIgnoreCase(type)) {</span>
+<span class="nc" id="L209">            disponibles.stream()</span>
+<span class="nc bnc" id="L210" title="All 4 branches missed.">                    .filter(a -&gt; a instanceof fr.spiga.fleet.DroneReconnaissance</span>
+                            || a instanceof fr.spiga.core.ActifMarin)
+<span class="nc" id="L212">                    .sorted(Comparator.comparingDouble(ActifMobile::getAutonomieRestante).reversed())</span>
+<span class="nc" id="L213">                    .limit(2)</span>
+<span class="nc" id="L214">                    .forEach(essaimSuggere::ajouterActif);</span>
+        } else {
+            // Par défaut
+<span class="nc" id="L217">            ActifMobile best = selectionnerActifOptimalParAutonomie();</span>
+<span class="nc bnc" id="L218" title="All 2 branches missed.">            if (best != null) {</span>
+<span class="nc" id="L219">                essaimSuggere.ajouterActif(best);</span>
+            }
+        }
+
+<span class="nc bnc" id="L223" title="All 2 branches missed.">        return essaimSuggere.getNombreActifs() &gt; 0 ? essaimSuggere : null;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

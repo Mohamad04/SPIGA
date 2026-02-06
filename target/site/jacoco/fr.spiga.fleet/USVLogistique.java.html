@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>USVLogistique.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">SPIGA</a> &gt; <a href="index.source.html" class="el_package">fr.spiga.fleet</a> &gt; <span class="el_source">USVLogistique.java</span></div><h1>USVLogistique.java</h1><pre class="source lang-java linenums">package fr.spiga.fleet;
+
+import fr.spiga.core.Position3D;
+
+/**
+ * USV logistique spécialisé en transport maritime de surface.
+ * Extension du véhicule de surface avec capacités de transport.
+ * 
+ * @author SPIGA Team
+ * @version 1.0
+ */
+public class USVLogistique extends VehiculeSurface {
+
+    private static final double VITESSE_MAX_DEFAUT = 8.0; // m/s (plus lent, chargé)
+    private static final double AUTONOMIE_MAX_DEFAUT = 24.0; // heures (très longue durée)
+
+    /** Capacité de charge en kg */
+    private final double capaciteCharge;
+
+    /** Charge actuelle en kg */
+    private double chargeActuelle;
+
+    /**
+     * Constructeur avec paramètres par défaut.
+     * 
+     * @param position la position initiale
+     */
+    public USVLogistique(Position3D position) {
+<span class="nc" id="L29">        super(position, VITESSE_MAX_DEFAUT, AUTONOMIE_MAX_DEFAUT);</span>
+<span class="nc" id="L30">        this.capaciteCharge = 500.0; // 500 kg</span>
+<span class="nc" id="L31">        this.chargeActuelle = 0.0;</span>
+<span class="nc" id="L32">    }</span>
+
+    public double getCapaciteCharge() {
+<span class="nc" id="L35">        return capaciteCharge;</span>
+    }
+
+    public double getChargeActuelle() {
+<span class="nc" id="L39">        return chargeActuelle;</span>
+    }
+
+    /**
+     * Charge du matériel.
+     * 
+     * @param poids le poids à charger en kg
+     * @return true si réussi, false sinon
+     */
+    public boolean charger(double poids) {
+<span class="nc bnc" id="L49" title="All 4 branches missed.">        if (poids &lt; 0 || chargeActuelle + poids &gt; capaciteCharge) {</span>
+<span class="nc" id="L50">            return false;</span>
+        }
+<span class="nc" id="L52">        chargeActuelle += poids;</span>
+<span class="nc" id="L53">        return true;</span>
+    }
+
+    /**
+     * Décharge du matériel.
+     * 
+     * @param poids le poids à décharger en kg
+     * @return true si réussi, false sinon
+     */
+    public boolean decharger(double poids) {
+<span class="nc bnc" id="L63" title="All 4 branches missed.">        if (poids &lt; 0 || poids &gt; chargeActuelle) {</span>
+<span class="nc" id="L64">            return false;</span>
+        }
+<span class="nc" id="L66">        chargeActuelle -= poids;</span>
+<span class="nc" id="L67">        return true;</span>
+    }
+
+    @Override
+    protected double calculerConsommation(double distance) {
+<span class="nc" id="L72">        double consommationBase = super.calculerConsommation(distance);</span>
+
+        // La charge augmente la consommation
+<span class="nc bnc" id="L75" title="All 2 branches missed.">        if (capaciteCharge &gt; 0) {</span>
+<span class="nc" id="L76">            double facteurCharge = 1.0 + (chargeActuelle / capaciteCharge) * 0.4;</span>
+<span class="nc" id="L77">            consommationBase *= facteurCharge;</span>
+        }
+
+<span class="nc" id="L80">        return consommationBase;</span>
+    }
+
+    @Override
+    public String getType() {
+<span class="nc" id="L85">        return &quot;USVLogistique&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

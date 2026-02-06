@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ActifMarin.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">SPIGA</a> &gt; <a href="index.source.html" class="el_package">fr.spiga.core</a> &gt; <span class="el_source">ActifMarin.java</span></div><h1>ActifMarin.java</h1><pre class="source lang-java linenums">package fr.spiga.core;
+
+import fr.spiga.environment.CourantMarin;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Classe abstraite représentant un actif marin.
+ * Les véhicules de surface et sous-marins héritent de cette classe.
+ * 
+ * &lt;p&gt;
+ * Les actifs marins sont sensibles aux courants marins et à la profondeur.
+ * La profondeur est représentée par une valeur Z négative.
+ * 
+ * @author SPIGA Team
+ * @version 1.0
+ */
+public abstract class ActifMarin extends ActifMobile {
+
+    /** Profondeur maximale opérationnelle en mètres (valeur positive) */
+    private final double profondeurMax;
+
+    /** Sensibilité aux courants marins (facteur multiplicateur de consommation) */
+    private final double sensibiliteCourant;
+
+    /**
+     * Constructeur pour les actifs marins.
+     * 
+     * @param position           la position initiale
+     * @param vitesseMax         la vitesse maximale en m/s
+     * @param autonomieMax       l'autonomie maximale en heures
+     * @param profondeurMax      la profondeur maximale en mètres (valeur positive)
+     * @param sensibiliteCourant le facteur de sensibilité au courant (1.0 = normal)
+     */
+    protected ActifMarin(Position3D position, double vitesseMax, double autonomieMax,
+            double profondeurMax, double sensibiliteCourant) {
+<span class="fc" id="L37">        super(position, vitesseMax, autonomieMax);</span>
+
+<span class="pc bpc" id="L39" title="1 of 2 branches missed.">        if (profondeurMax &lt; 0) {</span>
+<span class="nc" id="L40">            throw new IllegalArgumentException(&quot;La profondeur maximale doit être positive&quot;);</span>
+        }
+<span class="pc bpc" id="L42" title="1 of 2 branches missed.">        if (sensibiliteCourant &lt; 0) {</span>
+<span class="nc" id="L43">            throw new IllegalArgumentException(&quot;La sensibilité au courant ne peut pas être négative&quot;);</span>
+        }
+
+<span class="fc" id="L46">        this.profondeurMax = profondeurMax;</span>
+<span class="fc" id="L47">        this.sensibiliteCourant = sensibiliteCourant;</span>
+<span class="fc" id="L48">    }</span>
+
+    public double getProfondeurMax() {
+<span class="nc" id="L51">        return profondeurMax;</span>
+    }
+
+    public double getSensibiliteCourant() {
+<span class="nc" id="L55">        return sensibiliteCourant;</span>
+    }
+
+    /**
+     * Obtient la profondeur actuelle de l'actif.
+     * Retourne une valeur positive (l'opposé de Z).
+     * 
+     * @return la profondeur actuelle en mètres
+     */
+    public double getProfondeur() {
+<span class="fc" id="L65">        return -getPosition().getZ();</span>
+    }
+
+    @Override
+    protected void setPosition(Position3D nouvellePosition) {
+<span class="pc bpc" id="L70" title="1 of 2 branches missed.">        if (nouvellePosition == null) {</span>
+<span class="nc" id="L71">            throw new IllegalArgumentException(&quot;La position ne peut pas être nulle&quot;);</span>
+        }
+        // Pour un actif marin, la profondeur est -Z
+<span class="pc bpc" id="L74" title="1 of 2 branches missed.">        if (!estProfondeurValide(-nouvellePosition.getZ())) {</span>
+<span class="nc" id="L75">            throw new IllegalArgumentException(&quot;Profondeur invalide pour cet actif marin: &quot; + -nouvellePosition.getZ());</span>
+        }
+<span class="fc" id="L77">        super.setPosition(nouvellePosition);</span>
+<span class="fc" id="L78">    }</span>
+
+    /**
+     * Vérifie si la profondeur est valide pour cet actif.
+     * 
+     * @param profondeur la profondeur à vérifier (valeur positive)
+     * @return true si valide, false sinon
+     */
+    protected boolean estProfondeurValide(double profondeur) {
+        // La profondeur doit être positive (Z négatif) et &lt;= max
+        // Note: La validation Z &lt; 0 est implicite ici si on veut forcer
+        // l'immersion/surface
+<span class="pc bpc" id="L90" title="2 of 4 branches missed.">        return profondeur &gt;= -0.1 &amp;&amp; profondeur &lt;= profondeurMax; // Tolérance de 0.1m</span>
+    }
+
+    @Override
+    public boolean deplacer(Position3D cible) {
+<span class="nc bnc" id="L95" title="All 2 branches missed.">        if (cible == null) {</span>
+<span class="nc" id="L96">            return false;</span>
+        }
+
+        // Vérifier la profondeur (Z négatif ou nul pour les actifs marins)
+<span class="nc" id="L100">        double profondeurCible = -cible.getZ();</span>
+<span class="nc bnc" id="L101" title="All 2 branches missed.">        if (!estProfondeurValide(profondeurCible)) {</span>
+<span class="nc" id="L102">            System.out.println(&quot;Profondeur cible invalide: &quot; + profondeurCible +</span>
+                    &quot; (max: &quot; + profondeurMax + &quot;)&quot;);
+<span class="nc" id="L104">            notifierEtatCritique(&quot;PROFONDEUR_INVALIDE&quot;);</span>
+<span class="nc" id="L105">            return false;</span>
+        }
+
+        // Vérifier l'autonomie
+<span class="nc" id="L109">        double distance = getPosition().distanceVers(cible);</span>
+<span class="nc" id="L110">        double consommation = calculerConsommation(distance);</span>
+
+<span class="nc bnc" id="L112" title="All 2 branches missed.">        if (consommation &gt; getAutonomieRestante()) {</span>
+<span class="nc" id="L113">            System.out.println(&quot;Autonomie insuffisante pour atteindre la cible&quot;);</span>
+<span class="nc" id="L114">            notifierEtatCritique(&quot;BATTERIE_CRITIQUE&quot;);</span>
+<span class="nc" id="L115">            return false;</span>
+        }
+
+        // Vérifier la zone d'opération
+<span class="nc bnc" id="L119" title="All 4 branches missed.">        if (zoneOperation != null &amp;&amp; !zoneOperation.estDansZone(cible)) {</span>
+<span class="nc" id="L120">            System.out.println(&quot;Cible hors de la zone d'opération&quot;);</span>
+<span class="nc" id="L121">            notifierEtatCritique(&quot;ZONE_INTERDITE&quot;);</span>
+<span class="nc" id="L122">            return false;</span>
+        }
+
+        // Effectuer le déplacement
+<span class="nc" id="L126">        setPosition(cible);</span>
+<span class="nc" id="L127">        consommerAutonomie(consommation);</span>
+
+<span class="nc" id="L129">        return true;</span>
+    }
+
+    @Override
+    public List&lt;Position3D&gt; calculerTrajet(Position3D cible) {
+<span class="nc" id="L134">        List&lt;Position3D&gt; trajet = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L135">        trajet.add(getPosition());</span>
+
+        // Trajet simple en ligne droite
+        // Dans une implémentation avancée, on pourrait éviter les obstacles
+<span class="nc" id="L139">        trajet.add(cible);</span>
+
+<span class="nc" id="L141">        return trajet;</span>
+    }
+
+    @Override
+    protected double calculerConsommation(double distance) {
+<span class="fc" id="L146">        double consommationBase = super.calculerConsommation(distance);</span>
+
+        // Ajuster selon le courant marin si dans une zone d'opération
+<span class="pc bpc" id="L149" title="1 of 2 branches missed.">        if (zoneOperation != null) {</span>
+<span class="fc" id="L150">            CourantMarin courant = zoneOperation.getCourantMarin();</span>
+<span class="pc bpc" id="L151" title="1 of 2 branches missed.">            if (courant != null) {</span>
+<span class="fc" id="L152">                double facteurCourant = 1.0 + (courant.getIntensite() / 100.0) * sensibiliteCourant;</span>
+<span class="fc" id="L153">                consommationBase *= facteurCourant;</span>
+            }
+        }
+
+        // Ajuster selon la profondeur (plus profond = plus de consommation)
+<span class="fc" id="L158">        double profondeur = getProfondeur();</span>
+<span class="pc bpc" id="L159" title="1 of 2 branches missed.">        if (profondeurMax &gt; 0) {</span>
+<span class="nc" id="L160">            double facteurProfondeur = 1.0 + (profondeur / profondeurMax) * 0.3;</span>
+<span class="nc" id="L161">            consommationBase *= facteurProfondeur;</span>
+        }
+
+<span class="fc" id="L164">        return consommationBase;</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L169">        return String.format(&quot;%s[profondeur=%.1fm, profondeurMax=%.1fm]&quot;,</span>
+<span class="nc" id="L170">                super.toString(), getProfondeur(), profondeurMax);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

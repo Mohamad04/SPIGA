@@ -1,0 +1,423 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ZoneOperation.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">SPIGA</a> &gt; <a href="index.source.html" class="el_package">fr.spiga.environment</a> &gt; <span class="el_source">ZoneOperation.java</span></div><h1>ZoneOperation.java</h1><pre class="source lang-java linenums">package fr.spiga.environment;
+
+import fr.spiga.core.Position3D;
+import fr.spiga.core.ActifMobile;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Classe centrale gérant la zone d'opération et tous ses facteurs
+ * environnementaux.
+ * Cette classe intègre les facteurs dynamiques (vent, courants, précipitations)
+ * ainsi que les contraintes géographiques (limites, obstacles, zones
+ * interdites).
+ * 
+ * @author SPIGA Team
+ * @version 1.0
+ */
+public class ZoneOperation implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    /** Limites de la zone */
+    private final Position3D limitesMin;
+    private final Position3D limitesMax;
+    private Position3D rainZoneMin;
+    private Position3D rainZoneMax;
+
+    /** Facteurs atmosphériques */
+    private Vent vent;
+    private Precipitation precipitation;
+
+    /** Facteurs hydriques */
+    private CourantMarin courantMarin;
+
+    /** Obstacles fixes */
+    private final List&lt;Obstacle&gt; obstacles;
+
+    /** Zones d'exclusion */
+    private final List&lt;ZoneExclusion&gt; zonesExclusion;
+
+    /** Actifs présents dans la zone */
+    private final List&lt;ActifMobile&gt; actifs;
+
+    /**
+     * Constructeur de la zone d'opération.
+     * 
+     * @param limitesMin les limites minimales (coin inférieur)
+     * @param limitesMax les limites maximales (coin supérieur)
+     */
+<span class="fc" id="L50">    public ZoneOperation(Position3D limitesMin, Position3D limitesMax) {</span>
+<span class="pc bpc" id="L51" title="2 of 4 branches missed.">        if (limitesMin == null || limitesMax == null) {</span>
+<span class="nc" id="L52">            throw new IllegalArgumentException(&quot;Les limites ne peuvent pas être nulles&quot;);</span>
+        }
+<span class="pc bpc" id="L54" title="1 of 2 branches missed.">        if (limitesMin.getX() &gt;= limitesMax.getX() ||</span>
+<span class="pc bpc" id="L55" title="1 of 2 branches missed.">                limitesMin.getY() &gt;= limitesMax.getY()) {</span>
+<span class="nc" id="L56">            throw new IllegalArgumentException(&quot;Les limites min doivent être &lt; limites max&quot;);</span>
+        }
+
+<span class="fc" id="L59">        this.limitesMin = limitesMin;</span>
+<span class="fc" id="L60">        this.limitesMax = limitesMax;</span>
+<span class="fc" id="L61">        this.obstacles = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L62">        this.zonesExclusion = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L63">        this.actifs = new ArrayList&lt;&gt;();</span>
+
+        // Conditions par défaut (calmes)
+<span class="fc" id="L66">        this.vent = new Vent(new Position3D(0, 0, 0), 0.0);</span>
+<span class="fc" id="L67">        this.precipitation = new Precipitation();</span>
+<span class="fc" id="L68">        this.courantMarin = new CourantMarin(new Position3D(0, 0, 0), 0.0);</span>
+
+        // Zone de pluie par défaut (une partie de la carte)
+<span class="fc" id="L71">        this.rainZoneMin = new Position3D(20000, 20000, -2000);</span>
+<span class="fc" id="L72">        this.rainZoneMax = new Position3D(60000, 60000, 10000);</span>
+<span class="fc" id="L73">    }</span>
+
+    /**
+     * Obtient la précipitation à une position donnée.
+     */
+    public Precipitation getPrecipitationAt(Position3D pos) {
+<span class="pc bpc" id="L79" title="3 of 4 branches missed.">        if (pos.getX() &gt;= rainZoneMin.getX() &amp;&amp; pos.getX() &lt;= rainZoneMax.getX() &amp;&amp;</span>
+<span class="nc bnc" id="L80" title="All 4 branches missed.">                pos.getY() &gt;= rainZoneMin.getY() &amp;&amp; pos.getY() &lt;= rainZoneMax.getY()) {</span>
+<span class="nc" id="L81">            return precipitation;</span>
+        }
+<span class="fc" id="L83">        return new Precipitation(); // Pas de pluie ailleurs</span>
+    }
+
+    public Position3D getRainZoneMin() {
+<span class="nc" id="L87">        return rainZoneMin;</span>
+    }
+
+    public Position3D getRainZoneMax() {
+<span class="nc" id="L91">        return rainZoneMax;</span>
+    }
+
+    public Position3D getLimitesMin() {
+<span class="fc" id="L95">        return limitesMin;</span>
+    }
+
+    public Position3D getLimitesMax() {
+<span class="fc" id="L99">        return limitesMax;</span>
+    }
+
+    public Vent getVent() {
+<span class="fc" id="L103">        return vent;</span>
+    }
+
+    public void setVent(Vent vent) {
+<span class="pc bpc" id="L107" title="1 of 2 branches missed.">        if (vent == null) {</span>
+<span class="nc" id="L108">            throw new IllegalArgumentException(&quot;Le vent ne peut pas être nul&quot;);</span>
+        }
+<span class="fc" id="L110">        this.vent = vent;</span>
+<span class="fc" id="L111">    }</span>
+
+    public Precipitation getPrecipitation() {
+<span class="fc" id="L114">        return precipitation;</span>
+    }
+
+    public void setPrecipitation(Precipitation precipitation) {
+<span class="nc bnc" id="L118" title="All 2 branches missed.">        if (precipitation == null) {</span>
+<span class="nc" id="L119">            throw new IllegalArgumentException(&quot;La précipitation ne peut pas être nulle&quot;);</span>
+        }
+<span class="nc" id="L121">        this.precipitation = precipitation;</span>
+<span class="nc" id="L122">    }</span>
+
+    public CourantMarin getCourantMarin() {
+<span class="fc" id="L125">        return courantMarin;</span>
+    }
+
+    public void setCourantMarin(CourantMarin courantMarin) {
+<span class="nc bnc" id="L129" title="All 2 branches missed.">        if (courantMarin == null) {</span>
+<span class="nc" id="L130">            throw new IllegalArgumentException(&quot;Le courant marin ne peut pas être nul&quot;);</span>
+        }
+<span class="nc" id="L132">        this.courantMarin = courantMarin;</span>
+<span class="nc" id="L133">    }</span>
+
+    /**
+     * Ajoute un obstacle à la zone.
+     * 
+     * @param obstacle l'obstacle à ajouter
+     */
+    public void ajouterObstacle(Obstacle obstacle) {
+<span class="pc bpc" id="L141" title="1 of 2 branches missed.">        if (obstacle != null) {</span>
+<span class="fc" id="L142">            obstacles.add(obstacle);</span>
+        }
+<span class="fc" id="L144">    }</span>
+
+    /**
+     * Ajoute une zone d'exclusion.
+     * 
+     * @param zone la zone à ajouter
+     */
+    public void ajouterZoneExclusion(ZoneExclusion zone) {
+<span class="nc bnc" id="L152" title="All 2 branches missed.">        if (zone != null) {</span>
+<span class="nc" id="L153">            zonesExclusion.add(zone);</span>
+        }
+<span class="nc" id="L155">    }</span>
+
+    public List&lt;Obstacle&gt; getObstacles() {
+<span class="fc" id="L158">        return new ArrayList&lt;&gt;(obstacles);</span>
+    }
+
+    public List&lt;ZoneExclusion&gt; getZonesExclusion() {
+<span class="nc" id="L162">        return new ArrayList&lt;&gt;(zonesExclusion);</span>
+    }
+
+    /**
+     * Enregistre um ativo na zona.
+     */
+    public void enregistrerActif(ActifMobile actif) {
+<span class="pc bpc" id="L169" title="2 of 4 branches missed.">        if (actif != null &amp;&amp; !actifs.contains(actif)) {</span>
+<span class="fc" id="L170">            actifs.add(actif);</span>
+        }
+<span class="fc" id="L172">    }</span>
+
+    /**
+     * Remove um ativo da zona.
+     */
+    public void retirerActif(ActifMobile actif) {
+<span class="nc" id="L178">        actifs.remove(actif);</span>
+<span class="nc" id="L179">    }</span>
+
+    public List&lt;ActifMobile&gt; getTousLesActifs() {
+<span class="nc" id="L182">        return new ArrayList&lt;&gt;(actifs);</span>
+    }
+
+    /**
+     * Busca ativos vizinhos em um determinado raio.
+     */
+    public List&lt;ActifMobile&gt; getVoisins(ActifMobile demandeur, double rayon) {
+<span class="fc" id="L189">        List&lt;ActifMobile&gt; voisins = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L190">        Position3D posD = demandeur.getPosition();</span>
+<span class="fc bfc" id="L191" title="All 2 branches covered.">        for (ActifMobile a : actifs) {</span>
+<span class="pc bpc" id="L192" title="1 of 4 branches missed.">            if (a != demandeur &amp;&amp; a.getEtatOperationnel() != fr.spiga.core.EtatOperationnel.EN_PANNE) {</span>
+<span class="pc bpc" id="L193" title="1 of 2 branches missed.">                if (posD.distanceVers(a.getPosition()) &lt;= rayon) {</span>
+<span class="fc" id="L194">                    voisins.add(a);</span>
+                }
+            }
+<span class="fc" id="L197">        }</span>
+<span class="fc" id="L198">        return voisins;</span>
+    }
+
+    /**
+     * Vérifie si une position est dans les limites de la zone.
+     * 
+     * @param position la position à vérifier
+     * @return true si dans la zone, false sinon
+     */
+    public boolean estDansZone(Position3D position) {
+<span class="pc bpc" id="L208" title="1 of 4 branches missed.">        return position.getX() &gt;= limitesMin.getX() &amp;&amp; position.getX() &lt;= limitesMax.getX() &amp;&amp;</span>
+<span class="pc bpc" id="L209" title="2 of 4 branches missed.">                position.getY() &gt;= limitesMin.getY() &amp;&amp; position.getY() &lt;= limitesMax.getY() &amp;&amp;</span>
+<span class="pc bpc" id="L210" title="2 of 4 branches missed.">                position.getZ() &gt;= limitesMin.getZ() &amp;&amp; position.getZ() &lt;= limitesMax.getZ();</span>
+    }
+
+    /**
+     * Vérifie si une position est en collision avec un obstacle.
+     * 
+     * @param position la position à vérifier
+     * @return true si collision, false sinon
+     */
+    public boolean estEnCollisionAvecObstacle(Position3D position) {
+<span class="fc bfc" id="L220" title="All 2 branches covered.">        for (Obstacle obstacle : obstacles) {</span>
+<span class="fc bfc" id="L221" title="All 2 branches covered.">            if (obstacle.estEnCollision(position)) {</span>
+<span class="fc" id="L222">                return true;</span>
+            }
+<span class="fc" id="L224">        }</span>
+<span class="fc" id="L225">        return false;</span>
+    }
+
+    /**
+     * Vérifie si une position est dans une zone d'exclusion.
+     * 
+     * @param position la position à vérifier
+     * @return true si dans une zone interdite, false sinon
+     */
+    public boolean estDansZoneExclusion(Position3D position) {
+<span class="pc bpc" id="L235" title="1 of 2 branches missed.">        for (ZoneExclusion zone : zonesExclusion) {</span>
+<span class="nc bnc" id="L236" title="All 2 branches missed.">            if (zone.contientPosition(position)) {</span>
+<span class="nc" id="L237">                return true;</span>
+            }
+<span class="nc" id="L239">        }</span>
+<span class="fc" id="L240">        return false;</span>
+    }
+
+    /**
+     * Calcule le facteur d'ajustement de consommation pour une position donnée.
+     * Tient compte des conditions environnementales.
+     * 
+     * @param position la position
+     * @return le facteur multiplicateur (1.0 = normal, &gt;1.0 = plus de consommation)
+     */
+    public double calculerFacteurConsommation(Position3D position) {
+<span class="nc" id="L251">        double facteur = 1.0;</span>
+
+        // Facteur vent
+<span class="nc bnc" id="L254" title="All 4 branches missed.">        if (vent != null &amp;&amp; vent.getIntensite() &gt; 0) {</span>
+<span class="nc" id="L255">            facteur += vent.getIntensite() / 200.0; // Max +50%</span>
+        }
+
+        // Facteur précipitation
+<span class="nc bnc" id="L259" title="All 4 branches missed.">        if (precipitation != null &amp;&amp; precipitation.getIntensite() &gt; 0) {</span>
+<span class="nc" id="L260">            facteur += precipitation.getIntensite() / 300.0; // Max +33%</span>
+        }
+
+        // Facteur courant marin
+<span class="nc bnc" id="L264" title="All 4 branches missed.">        if (courantMarin != null &amp;&amp; courantMarin.getIntensite() &gt; 0) {</span>
+<span class="nc" id="L265">            facteur += courantMarin.getIntensite() / 250.0; // Max +40%</span>
+        }
+
+<span class="nc" id="L268">        return facteur;</span>
+    }
+
+    /**
+     * Calcule le point accessible le plus proche pour une position donnée et une
+     * altitude/profondeur.
+     * Si la position est dans un obstacle bloquant (compte tenu de zAlt), retourne
+     * le point sur la bordure.
+     * Sinon retourne la position elle-même.
+     * 
+     * @param position la position cible idéale
+     * @param zAlt     l'altitude ou profondeur de l'actif
+     * @return la position accessible la plus proche
+     */
+    /**
+     * Calcule la destination ajustée (clamped) si la cible est dans un obstacle.
+     * Cherche l'intersection entre le segment [depart, destination] et les
+     * obstacles.
+     * Retourne le point d'intersection (avec marge) le plus proche du départ.
+     * 
+     * @param demandeur   l'actif qui demande le trajet (pour s'exclure des
+     *                    collisions)
+     * @param depart      la position de départ de l'actif
+     * @param destination la position cible idéale
+     * @param zAlt        l'altitude ou profondeur de l'actif (pour le flyover)
+     * @return la position accessible la plus proche sur le trajet
+     */
+    public Position3D getClampedTarget(ActifMobile demandeur, Position3D depart, Position3D destination, double zAlt) {
+<span class="fc" id="L296">        Position3D meilleurPoint = destination;</span>
+<span class="fc" id="L297">        double minT = 1.0;</span>
+<span class="fc" id="L298">        boolean clamped = false;</span>
+
+<span class="fc bfc" id="L300" title="All 2 branches covered.">        for (Obstacle obs : obstacles) {</span>
+            // 1. Rayon effectif (marge de sécurité incluse)
+<span class="fc" id="L302">            double rayon = obs.getRayon() + 5.0; // 5m margin</span>
+
+            // 2. Check Vertical
+<span class="pc bpc" id="L305" title="1 of 2 branches missed.">            if (zAlt &gt; obs.getZMax() + 10.0)</span>
+<span class="nc" id="L306">                continue; // Flyover</span>
+
+            // 3. Check si destination est dedans (2D)
+<span class="fc" id="L309">            double dxDest = destination.getX() - obs.getPosition().getX();</span>
+<span class="fc" id="L310">            double dyDest = destination.getY() - obs.getPosition().getY();</span>
+<span class="pc bpc" id="L311" title="1 of 2 branches missed.">            boolean destInside = (dxDest * dxDest + dyDest * dyDest) &lt; (rayon * rayon);</span>
+
+<span class="pc bpc" id="L313" title="1 of 2 branches missed.">            if (!destInside)</span>
+<span class="nc" id="L314">                continue; // Si la destination n'est pas dans cet obstacle, on ignore (on gère l'arrivée</span>
+                          // finale)
+
+            // 4. Calcul Intersection Rayon-Cercle
+            // Segment P = depart + t * D
+<span class="fc" id="L319">            double dx = destination.getX() - depart.getX();</span>
+<span class="fc" id="L320">            double dy = destination.getY() - depart.getY();</span>
+
+            // Vecteur F = depart - centre
+<span class="fc" id="L323">            double fx = depart.getX() - obs.getPosition().getX();</span>
+<span class="fc" id="L324">            double fy = depart.getY() - obs.getPosition().getY();</span>
+
+            // Equation quadratique at^2 + bt + c = 0
+<span class="fc" id="L327">            double a = dx * dx + dy * dy;</span>
+<span class="fc" id="L328">            double b = 2 * (fx * dx + fy * dy);</span>
+<span class="fc" id="L329">            double c = (fx * fx + fy * fy) - (rayon * rayon);</span>
+
+<span class="fc" id="L331">            double delta = b * b - 4 * a * c;</span>
+
+<span class="pc bpc" id="L333" title="1 of 2 branches missed.">            if (delta &gt;= 0) {</span>
+                // On cherche la plus petite solution positive t
+<span class="fc" id="L335">                double t1 = (-b - Math.sqrt(delta)) / (2 * a);</span>
+<span class="fc" id="L336">                double t2 = (-b + Math.sqrt(delta)) / (2 * a);</span>
+
+<span class="fc" id="L338">                double t = -1.0;</span>
+<span class="pc bpc" id="L339" title="2 of 4 branches missed.">                if (t1 &gt;= 0 &amp;&amp; t1 &lt;= 1.0)</span>
+<span class="fc" id="L340">                    t = t1;</span>
+<span class="nc bnc" id="L341" title="All 4 branches missed.">                else if (t2 &gt;= 0 &amp;&amp; t2 &lt;= 1.0)</span>
+<span class="nc" id="L342">                    t = t2;</span>
+
+<span class="pc bpc" id="L344" title="2 of 4 branches missed.">                if (t &gt;= 0 &amp;&amp; t &lt; minT) {</span>
+<span class="fc" id="L345">                    minT = t;</span>
+<span class="fc" id="L346">                    clamped = true;</span>
+                }
+            }
+<span class="fc" id="L349">        }</span>
+
+        // 5. Check against other vehicles
+<span class="fc bfc" id="L352" title="All 2 branches covered.">        for (ActifMobile out : actifs) {</span>
+<span class="fc bfc" id="L353" title="All 2 branches covered.">            if (out == demandeur)</span>
+<span class="fc" id="L354">                continue;</span>
+            // Un veículo parado ou arrivando no ponto conta como obstáculo se estiver
+            // &quot;ocupando&quot; o ponto.
+            // Para simplificar, tratamos todos os ativos como obstáculos circulares de
+            // raio 15m.
+<span class="fc" id="L359">            double rayonVehicule = 15.0;</span>
+
+            // Check Vertical (mesma &quot;fatia&quot; Z)
+<span class="pc bpc" id="L362" title="1 of 2 branches missed.">            if (Math.abs(zAlt - out.getPosition().getZ()) &gt; 10.0)</span>
+<span class="nc" id="L363">                continue;</span>
+
+<span class="fc" id="L365">            double dxDest = destination.getX() - out.getPosition().getX();</span>
+<span class="fc" id="L366">            double dyDest = destination.getY() - out.getPosition().getY();</span>
+<span class="fc bfc" id="L367" title="All 2 branches covered.">            boolean destInside = (dxDest * dxDest + dyDest * dyDest) &lt; (rayonVehicule * rayonVehicule);</span>
+
+<span class="fc bfc" id="L369" title="All 2 branches covered.">            if (!destInside)</span>
+<span class="fc" id="L370">                continue;</span>
+
+<span class="fc" id="L372">            double dx = destination.getX() - depart.getX();</span>
+<span class="fc" id="L373">            double dy = destination.getY() - depart.getY();</span>
+<span class="fc" id="L374">            double fx = depart.getX() - out.getPosition().getX();</span>
+<span class="fc" id="L375">            double fy = depart.getY() - out.getPosition().getY();</span>
+
+<span class="fc" id="L377">            double a = dx * dx + dy * dy;</span>
+<span class="fc" id="L378">            double b = 2 * (fx * dx + fy * dy);</span>
+<span class="fc" id="L379">            double c = (fx * fx + fy * fy) - (rayonVehicule * rayonVehicule);</span>
+
+<span class="fc" id="L381">            double delta = b * b - 4 * a * c;</span>
+<span class="pc bpc" id="L382" title="1 of 2 branches missed.">            if (delta &gt;= 0) {</span>
+<span class="fc" id="L383">                double t1 = (-b - Math.sqrt(delta)) / (2 * a);</span>
+<span class="fc" id="L384">                double t2 = (-b + Math.sqrt(delta)) / (2 * a);</span>
+<span class="fc" id="L385">                double t = -1.0;</span>
+<span class="pc bpc" id="L386" title="2 of 4 branches missed.">                if (t1 &gt;= 0 &amp;&amp; t1 &lt;= 1.0)</span>
+<span class="fc" id="L387">                    t = t1;</span>
+<span class="nc bnc" id="L388" title="All 4 branches missed.">                else if (t2 &gt;= 0 &amp;&amp; t2 &lt;= 1.0)</span>
+<span class="nc" id="L389">                    t = t2;</span>
+
+<span class="pc bpc" id="L391" title="2 of 4 branches missed.">                if (t &gt;= 0 &amp;&amp; t &lt; minT) {</span>
+<span class="fc" id="L392">                    minT = t;</span>
+<span class="fc" id="L393">                    clamped = true;</span>
+                }
+            }
+<span class="fc" id="L396">        }</span>
+
+<span class="fc bfc" id="L398" title="All 2 branches covered.">        if (clamped) {</span>
+            // Calculer le point exact
+<span class="fc" id="L400">            double dx = destination.getX() - depart.getX();</span>
+<span class="fc" id="L401">            double dy = destination.getY() - depart.getY();</span>
+<span class="fc" id="L402">            double dz = destination.getZ() - depart.getZ();</span>
+
+            // On recule un tout petit peu (0.1%) pour être sûr d'être dehors
+<span class="fc" id="L405">            double tSafe = Math.max(0, minT - 0.001);</span>
+
+<span class="fc" id="L407">            meilleurPoint = new Position3D(</span>
+<span class="fc" id="L408">                    depart.getX() + dx * tSafe,</span>
+<span class="fc" id="L409">                    depart.getY() + dy * tSafe,</span>
+<span class="fc" id="L410">                    depart.getZ() + dz * tSafe // On garde la pente Z</span>
+            );
+        }
+
+<span class="fc" id="L414">        return meilleurPoint;</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L419">        return String.format(&quot;ZoneOperation[limites=%s à %s, obstacles=%d, zones exclusion=%d]&quot;,</span>
+<span class="nc" id="L420">                limitesMin, limitesMax, obstacles.size(), zonesExclusion.size());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

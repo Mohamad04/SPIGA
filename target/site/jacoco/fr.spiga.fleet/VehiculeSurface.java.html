@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>VehiculeSurface.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">SPIGA</a> &gt; <a href="index.source.html" class="el_package">fr.spiga.fleet</a> &gt; <span class="el_source">VehiculeSurface.java</span></div><h1>VehiculeSurface.java</h1><pre class="source lang-java linenums">package fr.spiga.fleet;
+
+import fr.spiga.core.ActifMarin;
+import fr.spiga.core.Position3D;
+
+/**
+ * Véhicule de surface autonome (ASV - Autonomous Surface Vehicle).
+ * Opère à la surface de l'eau (Z=0) et est sensible au vent et à l'état de la
+ * mer.
+ * 
+ * @author SPIGA Team
+ * @version 1.0
+ */
+public class VehiculeSurface extends ActifMarin {
+
+    private static final double VITESSE_MAX_DEFAUT = 25.0; // m/s (90 km/h)
+    private static final double AUTONOMIE_MAX_DEFAUT = 12.0; // heures
+    private static final double PROFONDEUR_MAX_DEFAUT = 0.0; // Surface uniquement
+    private static final double SENSIBILITE_COURANT_DEFAUT = 1.5;
+
+    /** Stabilité en mer (facteur de résistance aux vagues) */
+    private final double stabilite;
+
+    /**
+     * Constructeur avec paramètres par défaut.
+     * 
+     * @param position la position initiale (Z doit être 0)
+     */
+    public VehiculeSurface(Position3D position) {
+<span class="fc" id="L30">        this(position, VITESSE_MAX_DEFAUT, AUTONOMIE_MAX_DEFAUT);</span>
+<span class="fc" id="L31">    }</span>
+
+    /**
+     * Constructeur avec paramètres personnalisés.
+     * 
+     * @param position     la position initiale (Z doit être 0)
+     * @param vitesseMax   la vitesse maximale en m/s
+     * @param autonomieMax l'autonomie maximale en heures
+     */
+    public VehiculeSurface(Position3D position, double vitesseMax, double autonomieMax) {
+<span class="fc" id="L41">        super(position, vitesseMax, autonomieMax, PROFONDEUR_MAX_DEFAUT, SENSIBILITE_COURANT_DEFAUT);</span>
+
+        // Forcer Z=0 pour véhicule de surface
+<span class="pc bpc" id="L44" title="1 of 2 branches missed.">        if (position.getZ() != 0) {</span>
+<span class="nc" id="L45">            setPosition(new Position3D(position.getX(), position.getY(), 0.0));</span>
+        }
+
+<span class="fc" id="L48">        this.stabilite = 0.8;</span>
+<span class="fc" id="L49">    }</span>
+
+    public double getStabilite() {
+<span class="nc" id="L52">        return stabilite;</span>
+    }
+
+    @Override
+    public boolean deplacer(Position3D cible) {
+        // Les véhicules de surface doivent rester en surface
+<span class="nc" id="L58">        Position3D cibleSurface = new Position3D(cible.getX(), cible.getY(), 0.0);</span>
+<span class="nc" id="L59">        return super.deplacer(cibleSurface);</span>
+    }
+
+    @Override
+    protected double calculerConsommation(double distance) {
+<span class="fc" id="L64">        double conso = super.calculerConsommation(distance);</span>
+
+        // Sensibilité au vent (État de la mer)
+        // Le vent crée des vagues qui ralentissent/augmentent la consommation
+<span class="pc bpc" id="L68" title="2 of 4 branches missed.">        if (zoneOperation != null &amp;&amp; zoneOperation.getVent() != null) {</span>
+<span class="fc" id="L69">            double facteurVent = 1.0 + (zoneOperation.getVent().getIntensite() / 100.0) * 0.5; // +50% max</span>
+<span class="fc" id="L70">            conso *= facteurVent;</span>
+        }
+<span class="fc" id="L72">        return conso;</span>
+    }
+
+    @Override
+    public String getType() {
+<span class="nc" id="L77">        return &quot;VehiculeSurface&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>
